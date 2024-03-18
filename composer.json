@@ -18,7 +18,15 @@
             "MarceloEatWorld\\FalAI\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
     "require-dev": {
         "phpunit/phpunit": "^11.0"
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+
 }
