@@ -6,7 +6,7 @@
 /composer.lock
 /phpunit.xml
 /.idea/
-/vendor/
 *.swp
 *.swo
 /tests/
+/vendor/
