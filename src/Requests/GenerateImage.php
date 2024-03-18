@@ -6,6 +6,7 @@ use MarceloEatWorld\FalAI\Data\GenerationData;
 use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
+use Saloon\Http\Response;
 use Saloon\Traits\Body\HasJsonBody;
 
 class GenerateImage extends Request implements HasBody
@@ -23,7 +24,7 @@ class GenerateImage extends Request implements HasBody
 
     public function resolveEndpoint(): string
     {
-        return '/queue.fal.run/fal-ai/' . $this->model;
+        return sprintf('/fal-ai/%s', $this->model);
     }
 
     protected function defaultBody(): array
