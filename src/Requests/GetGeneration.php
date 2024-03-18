@@ -19,7 +19,7 @@ class GetGeneration extends Request
 
     public function resolveEndpoint(): string
     {
-        return '/queue.fal.run/fal-ai/requests/' . $this->id;
+        return sprintf('/fal-ai/%s/requests/', $this->id);
     }
 
     protected function defaultQuery(): array

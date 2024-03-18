@@ -13,7 +13,7 @@ class GetGenerations extends Request
 
     public function resolveEndpoint(): string
     {
-        return '/queue.fal.run/fal-ai/requests';
+        return '/fal-ai/%s/requests/';
     }
 
     public function createDtoFromResponse(Response $response): GenerationsData
