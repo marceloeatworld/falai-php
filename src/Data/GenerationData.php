@@ -13,35 +13,42 @@ final class GenerationData
         public ?array $logs,
         public ?array $response,
         public ?string $error,
+        public ?string $requestId,
+        public ?string $statusUrl,
+        public ?string $cancelUrl,
     ) {
     }
 
     public static function fromResponse(Response $response): self
     {
+
         $data = $response->json();
-    
+        
         return new self(
-            id: $data['request_id'] ?? null,
+            id: $data['id'] ?? $data['request_id'] ?? null,
             status: $data['status'] ?? null,
             responseUrl: $data['response_url'] ?? null,
             logs: $data['logs'] ?? null,
-            response: $data['response'] ?? null,
+            response: $data['response'] ?? $data['payload'] ?? null,
             error: $data['error'] ?? null,
+            requestId: $data['request_id'] ?? null,
+            statusUrl: $data['status_url'] ?? null,
+            cancelUrl: $data['cancel_url'] ?? null,
         );
     }
 
-    
-    public static function fromWebhook(Request $request): self
+    public function toArray(): array
     {
-        $data = $request->json()->all();
-
-        return new self(
-            id: $data['request_id'] ?? null,
-            status: $data['status'] ?? null,
-            responseUrl: $data['payload']['response_url'] ?? null,
-            logs: $data['payload']['logs'] ?? null,
-            response: $data['payload'] ?? null,
-            error: $data['error'] ?? null,
-        );
+        return [
+            'id' => $this->id,
+            'status' => $this->status,
+            'responseUrl' => $this->responseUrl,
+            'logs' => $this->logs,
+            'response' => $this->response,
+            'error' => $this->error,
+            'requestId' => $this->requestId,
+            'statusUrl' => $this->statusUrl,
+            'cancelUrl' => $this->cancelUrl,
+        ];
     }
 }
