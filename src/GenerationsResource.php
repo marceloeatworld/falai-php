@@ -8,9 +8,7 @@ use MarceloEatWorld\FalAI\Requests\GenerateImage;
 use MarceloEatWorld\FalAI\Requests\GetGeneration;
 use MarceloEatWorld\FalAI\Requests\GetGenerations;
 use MarceloEatWorld\FalAI\Requests\CancelGeneration;
-
-
-
+use Illuminate\Support\Facades\Log;
 
 class GenerationsResource extends Resource
 {
@@ -18,36 +16,46 @@ class GenerationsResource extends Resource
 
     public function list(): GenerationsData
     {
-        $request = new GetGenerations();
-        $request->withTokenAuth($this->connector->apiKey);
+        $request = new GetGenerations($this->connector->apiKey);
 
         $response = $this->connector->send($request);
         return GenerationsData::fromResponse($response);
     }
-    public function get(string $id, bool $withLogs = false): GenerationData
+
+    public function get(string $model, string $id, bool $withLogs = false): GenerationData
     {
-        $request = new GetGeneration($id, $withLogs);
-        $request->withTokenAuth($this->connector->apiKey);
-    
+        $model = explode('/', $model)[0];
+
+        $request = new GetGeneration($model, $id, $this->connector->apiKey, $withLogs);
+
         $response = $this->connector->send($request);
-    
+        Log::info('Raw response:', [$request->body()]);
+
+        Log::info('Raw response:', [$response->body()]);
+
         return GenerationData::fromResponse($response);
     }
+
     public function create(string $model, array $input): GenerationData
     {
-        $request = new GenerateImage($model, $input, $this->webhookUrl);
-        $request->withTokenAuth("{$this->connector->apiKeyId}:{$this->connector->apiKeySecret}", 'Key');
+        $request = new GenerateImage($model, $input, $this->connector->apiKey, $this->webhookUrl);
     
         $response = $this->connector->send($request);
-        
+    
         Log::info('Create generation response:', $response->json());
-        
-        return GenerationData::fromResponse($response);
+    
+        $data = GenerationData::fromResponse($response);
+    
+        if ($data->requestId) {
+            return $data;
+        } else {
+            throw new \Exception('Failed to create generation');
+        }
     }
+
     public function cancel(string $id): void
     {
-        $request = new CancelGeneration($id);
-        $request->withTokenAuth($this->connector->apiKey);
+        $request = new CancelGeneration($id, $this->connector->apiKey);
 
         $this->connector->send($request);
     }
@@ -58,5 +66,4 @@ class GenerationsResource extends Resource
 
         return $this;
     }
-    
 }

@@ -12,19 +12,29 @@ class GetGeneration extends Request
     protected Method $method = Method::GET;
 
     public function __construct(
+        protected string $model,
         protected string $id,
+        protected string $apiKey,
         protected bool $withLogs = false,
     ) {
     }
 
+
     public function resolveEndpoint(): string
     {
-        return sprintf('/requests/%s/status', $this->id);
+        return sprintf('%s/requests/%s', $this->model, $this->id);
     }
 
     protected function defaultQuery(): array
     {
         return $this->withLogs ? ['logs' => '1'] : [];
+    }
+
+    public function defaultHeaders(): array
+    {
+        return [
+            'Authorization' => 'Key ' . $this->apiKey,
+        ];
     }
 
     public function createDtoFromResponse(Response $response): GenerationData

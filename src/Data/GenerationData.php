@@ -3,6 +3,7 @@
 namespace MarceloEatWorld\FalAI\Data;
 
 use Saloon\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 final class GenerationData
 {
@@ -21,9 +22,24 @@ final class GenerationData
 
     public static function fromResponse(Response $response): self
     {
+        try {
+            $data = $response->json();
+        } catch (\JsonException $e) {
+            Log::error('Error parsing JSON response:', ['error' => $e->getMessage()]);
 
-        $data = $response->json();
-        
+            return new self(
+                id: null,
+                status: 'error',
+                responseUrl: null,
+                logs: null,
+                response: null,
+                error: 'Invalid JSON response from API',
+                requestId: null,
+                statusUrl: null,
+                cancelUrl: null,
+            );
+        }
+
         return new self(
             id: $data['id'] ?? $data['request_id'] ?? null,
             status: $data['status'] ?? null,

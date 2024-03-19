@@ -18,13 +18,14 @@ class GenerateImage extends Request implements HasBody
     public function __construct(
         protected string $model,
         protected array $input,
+        protected string $apiKey,
         protected ?string $webhookUrl = null,
     ) {
     }
 
     public function resolveEndpoint(): string
     {
-        return sprintf('/fal-ai/%s', $this->model);
+        return sprintf('%s', $this->model);
     }
 
     protected function defaultBody(): array
@@ -35,6 +36,13 @@ class GenerateImage extends Request implements HasBody
     protected function defaultQuery(): array
     {
         return $this->webhookUrl ? ['fal_webhook' => $this->webhookUrl] : [];
+    }
+
+    public function defaultHeaders(): array
+    {
+        return [
+            'Authorization' => 'Key ' . $this->apiKey,
+        ];
     }
 
     public function createDtoFromResponse(Response $response): GenerationData

@@ -8,14 +8,12 @@ class FalAI extends Connector
 {
     public function __construct(
         public string $apiKey,
-        public string $apiKeyId,
-        public string $apiKeySecret,
     ) {
     }
 
     public function resolveBaseUrl(): string
     {
-        return 'https://queue.fal.run';
+        return 'https://queue.fal.run/fal-ai/';
     }
 
     protected function defaultHeaders(): array

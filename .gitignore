@@ -10,4 +10,4 @@
 *.swo
 /tests/
 /vendor/
-```
+.env
