@@ -6,10 +6,7 @@ use Saloon\Http\Connector;
 
 class FalAI extends Connector
 {
-    public function __construct(
-        public string $apiKey,
-    ) {
-    }
+    public function __construct(public readonly string $apiKey) {}
 
     public function resolveBaseUrl(): string
     {
@@ -21,6 +18,7 @@ class FalAI extends Connector
         return [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
+            'Authorization' => 'Key ' . $this->apiKey,
         ];
     }
 

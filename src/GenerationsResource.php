@@ -39,18 +39,10 @@ class GenerationsResource extends Resource
     public function create(string $model, array $input): GenerationData
     {
         $request = new GenerateImage($model, $input, $this->connector->apiKey, $this->webhookUrl);
-    
+
         $response = $this->connector->send($request);
-    
-        Log::info('Create generation response:', $response->json());
-    
-        $data = GenerationData::fromResponse($response);
-    
-        if ($data->requestId) {
-            return $data;
-        } else {
-            throw new \Exception('Failed to create generation');
-        }
+
+        return GenerationData::fromResponse($response);
     }
 
     public function cancel(string $id): void
@@ -63,7 +55,17 @@ class GenerationsResource extends Resource
     public function withWebhook(string $url): self
     {
         $this->webhookUrl = $url;
-
+    
         return $this;
+    }
+    public function subscribeToUpdates(string $webhookUrl, callable $callback): void
+    {
+        $request = new GenerateImage($model, [], $this->connector->apiKey, $webhookUrl);
+
+        $response = $this->connector->send($request);
+
+        $data = GenerationData::fromResponse($response);
+
+        $callback($data);
     }
 }
