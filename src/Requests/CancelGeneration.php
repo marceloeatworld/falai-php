@@ -1,4 +1,5 @@
 <?php
+// src/Requests/CancelGeneration.php
 
 namespace MarceloEatWorld\FalAI\Requests;
 
@@ -11,19 +12,11 @@ class CancelGeneration extends Request
 
     public function __construct(
         protected string $id,
-        protected string $apiKey,
     ) {
     }
 
     public function resolveEndpoint(): string
     {
-        return sprintf('/requests/%s/cancel', $this->id);
-    }
-
-    public function defaultHeaders(): array
-    {
-        return [
-            'Authorization' => 'Key ' . $this->apiKey,
-        ];
+        return "/requests/{$this->id}/cancel";
     }
 }
