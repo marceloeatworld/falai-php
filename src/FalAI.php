@@ -23,12 +23,6 @@ class FalAI extends Connector
         ];
     }
 
-    public function defaultConfig(): array
-    {
-        return [
-            'timeout' => 30,
-        ];
-    }
 
     public function generations(): GenerationsResource
     {
