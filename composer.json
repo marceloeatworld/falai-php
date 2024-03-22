@@ -1,7 +1,6 @@
 {
     "name": "marceloeatworld/falai-php",
     "description": "A PHP client for the Fal AI API",
-    "version": "0.1.0",
     "keywords": ["fal-ai", "php", "package"],
     "license": "MIT",
     "authors": [
