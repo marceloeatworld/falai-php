@@ -21,7 +21,7 @@ class GenerationsResource extends Resource
 
     public function getStatus(string $model, string $requestId): GenerationData
     {
-        $model = explode('/', $model)[0];
+        $model = strpos($model, '/') !== false ? explode('/', $model)[0] : $model;
     
         $request = new GetGenerationStatus($model, $requestId);
     
@@ -32,7 +32,7 @@ class GenerationsResource extends Resource
     
     public function getResult(string $model, string $requestId): GenerationData
     {
-        $model = explode('/', $model)[0];
+        $model = strpos($model, '/') !== false ? explode('/', $model)[0] : $model;
     
         $request = new GetGenerationResult($model, $requestId);
     
