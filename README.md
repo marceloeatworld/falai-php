@@ -88,3 +88,32 @@ Fal AI allows you to configure a webhook to be called when your image generation
 $falAI->generations()->withWebhook('https://www.example.com/webhook')->create($model, $input);
 $data->requestId; // bf1bb655-9027-4d01-ac38-f85e0cb007dc
 ```
+
+## Using Workflows
+
+In addition to generating images using predefined models, you can also use custom workflows with the `getWorkflow` method. Here's an example:
+
+```bash
+use MarceloEatWorld\FalAI\FalAI;
+
+$falAI = new FalAI(
+    apiKey: $_ENV['FAL_AI_API_KEY'],
+);
+
+$workflowId = 'acme/fantasy-character-generator';
+$input = [
+    'input' => [
+        'character_description' => 'A brave elven warrior with long, flowing hair and a glowing magical sword.',
+        'character_class' => 'ranger',
+        'background_setting' => 'enchanted forest',
+        'art_style' => 'digital painting',
+        'color_scheme' => 'vibrant',
+        'resolution' => '1024x1024',
+        'num_variations' => 3,
+        'seed' => 987654,
+    ],
+];
+
+$data = $falAI->generations()->getWorkflow($workflowId, $input);
+$data->requestId; // 5e8f1ab3-2c7d-4e9a-b5d6-8c3a1f9b04e7
+```
