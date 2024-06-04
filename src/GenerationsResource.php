@@ -9,6 +9,7 @@ use MarceloEatWorld\FalAI\Requests\GetGeneration;
 use MarceloEatWorld\FalAI\Requests\CancelGeneration;
 use MarceloEatWorld\FalAI\Requests\GetGenerationStatus;
 use MarceloEatWorld\FalAI\Requests\GetGenerationResult;
+use MarceloEatWorld\FalAI\Requests\GetWorkflow;
 use Illuminate\Support\Facades\Log;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
@@ -18,6 +19,15 @@ use Saloon\Http\Request;
 class GenerationsResource extends Resource
 {
     protected ?string $webhookUrl = null;
+
+    public function getWorkflow(string $workflowId, array $input): GenerationData
+    {
+        $request = new GetWorkflow($workflowId, $input);
+
+        $response = $this->connector->send($request);
+
+        return GenerationData::fromResponse($response);
+    }
 
     public function getStatus(string $model, string $requestId): GenerationData
     {
