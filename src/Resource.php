@@ -1,6 +1,6 @@
 <?php
 
-namespace MarceloEatWorld\Falai;
+namespace MarceloEatWorld\FalAI;
 
 use Saloon\Http\Connector;
 
