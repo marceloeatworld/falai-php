@@ -19,14 +19,85 @@ use Saloon\Http\Request;
 class GenerationsResource extends Resource
 {
     protected ?string $webhookUrl = null;
-
-    public function getWorkflow(string $workflowId, array $input): GenerationData
+    
+    public function getWorkflow(string $workflowId, array $input, ?string $webhookUrl = null, int $maxRetries = 5, int $initialDelay = 1): GenerationData
     {
-        $request = new GetWorkflow($workflowId, $input);
+        $retries = 0;
+        $retryDelay = $initialDelay;
+    
+        while ($retries < $maxRetries) {
+            try {
+                $request = new GetWorkflow($workflowId, $input);
+    
+                if ($webhookUrl) {
+                    $request->withQuery(['fal_webhook' => $webhookUrl]);
+                }
+    
+                $response = $this->connector->send($request);
+    
+                $data = $response->json();
+    
+                if (!isset($data['request_id'])) {
+                    throw new \Exception('Missing required key "request_id" in FAL AI API response');
+                }
+    
+                return new GenerationData(
+                    requestId: $data['request_id'],
+                    responseUrl: $data['response_url'] ?? null,
+                    statusUrl: $data['status_url'] ?? null,
+                    cancelUrl: $data['cancel_url'] ?? null,
+                    status: $data['status'] ?? null,
+                    payload: $data['payload'] ?? null,
+                    error: $data['error'] ?? null,
+                );
+            } catch (\Exception $e) {
+                $retries++;
+    
+                if ($retries >= $maxRetries) {
+                    Log::error('Max retries reached. Error submitting FAL AI workflow: ' . $e->getMessage(), [
+                        'workflowId' => $workflowId,
+                        'input' => $input,
+                        'webhookUrl' => $webhookUrl,
+                        'exception' => [
+                            'message' => $e->getMessage(),
+                            'code' => $e->getCode(),
+                            'file' => $e->getFile(),
+                            'line' => $e->getLine(),
+                            'trace' => $e->getTraceAsString(),
+                        ],
+                    ]);
+                    throw $e;
+                }
+    
+                Log::warning('Retry ' . $retries . ': ' . $e->getMessage(), [
+                    'workflowId' => $workflowId,
+                    'input' => $input,
+                    'webhookUrl' => $webhookUrl,
+                    'exception' => [
+                        'message' => $e->getMessage(),
+                        'code' => $e->getCode(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => $e->getTraceAsString(),
+                    ],
+                ]);
+    
+                sleep($retryDelay);
+                $retryDelay *= 2;
+            }
+        }
+    
+        throw new \Exception('All retries failed. Unable to submit FAL AI workflow.');
+    }
 
-        $response = $this->connector->send($request);
-
-        return GenerationData::fromResponse($response);
+    // Private method to extract the model
+    private function extractModel(string $model): string
+    {
+        if (strpos($model, 'workflows/') !== false) {
+            return explode('/', $model)[2]; 
+        } else {
+            return strpos($model, '/') !== false ? explode('/', $model)[0] : $model;
+        }
     }
 
     public function getStatus(string $model, string $requestId): GenerationData
