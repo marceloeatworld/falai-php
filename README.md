@@ -1,4 +1,4 @@
-#The workflow isn't working; I need more time to fix the issue. However, the normal model is functioning.
+# The workflow isn't working; I need more time to fix the issue. However, the normal model is functioning.
 # FAL AI PHP Client
 
 This is a framework-agnostic PHP client for Fal AI built on the amazing Saloon v3 🤠 library. Use it to easily interact with the Fal AI API and generate images right from your PHP application.
