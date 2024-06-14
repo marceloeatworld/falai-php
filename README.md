@@ -102,6 +102,6 @@ $input = [
     ],
 ];
 
-$data = $falAI->generations()->withWebhook($webhookUrl)->workflow($workflowUrl, $input);
+$data = $falAI->generations()->withWebhook($webhookUrl)->workflow($workflowId, $input);
 $data->requestId; // 5e8f1ab3-2c7d-4e9a-b5d6-8c3a1f9b04e7
 ```
