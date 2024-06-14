@@ -63,10 +63,6 @@ public function register()
     });
 }
 ```
-And use anywhere in your application
-```bash
-$data = app(FalAI::class)->generations()->get($model, $requestId);
-```
 
 Response Data
 All responses are returned as data objects. Detailed information can be found by inspecting the following class properties:
