@@ -11,7 +11,7 @@ class FalAI extends Connector
 
     public function resolveBaseUrl(): string
     {
-        return 'https://queue.fal.run/fal-ai/';
+        return 'https://queue.fal.run/';
     }
 
     protected function defaultHeaders(): array

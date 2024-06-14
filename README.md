@@ -1,4 +1,4 @@
-# The workflow isn't working; I need more time to fix the issue. However, the normal model is functioning.
+# The workflow is working;
 # FAL AI PHP Client
 
 This is a framework-agnostic PHP client for Fal AI built on the amazing Saloon v3 🤠 library. Use it to easily interact with the Fal AI API and generate images right from your PHP application.
@@ -34,19 +34,12 @@ $falAI = new FalAI(
 Then use it to generate an image
 
 ```bash
-$model = 'instantid/lcm';
+$model = 'fal-ai/modelyouwant';
 $input = [
-    "face_image_url" => "https://example.com/image.png",
+    "image_url" => "https://example.com/image.png",
     "prompt" => "A tender moment between the newlyweds, capturing their happiness with a natural background and soft light.",
     "style" => "(No style)",
     "negative_prompt" => "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-    "num_inference_steps" => 5,
-    "guidance_scale" => 1.5,
-    "controlnet_selection" => "canny",
-    "controlnet_conditioning_scale" => 0.4,
-    "ip_adapter_scale" => 0.7,
-    "identity_controlnet_conditioning_scale" => 0.7,
-    "enhance_face_region" => true,
     "seed" => 454545
 ];
 
@@ -101,7 +94,7 @@ $falAI = new FalAI(
     apiKey: $_ENV['FAL_AI_API_KEY'],
 );
 
-$workflowId = 'acme/fantasy-character-generator';
+$workflowId = 'workflows/youraccount/fantasy-character-generator';
 $input = [
     'input' => [
         'character_description' => 'A brave elven warrior with long, flowing hair and a glowing magical sword.',
@@ -115,6 +108,6 @@ $input = [
     ],
 ];
 
-$data = $falAI->generations()->getWorkflow($workflowId, $input);
+$data = $falAI->generations()->withWebhook($webhookUrl)->workflow($workflowUrl, $input);
 $data->requestId; // 5e8f1ab3-2c7d-4e9a-b5d6-8c3a1f9b04e7
 ```
