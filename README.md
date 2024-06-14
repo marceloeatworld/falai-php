@@ -86,15 +86,21 @@ $data->requestId; // bf1bb655-9027-4d01-ac38-f85e0cb007dc
 ```
 
 
-### Using Workflows
+### Using Workflows and ComfyUI
 
-In addition to generating images using predefined models, you can also use custom workflows with the 'workflow' method. Here's an example:
+In addition to generating images using predefined models, you can also use custom workflows and ComfyUI with the 'workflow' method. 
+Here's an example:
 
 ```php
 use MarceloEatWorld\FalAI\FalAI;
 use MarceloEatWorld\FalAI\Data\GenerationData;
 
+// Replace 'workflows/youraccount/fantasy-character-generator' with your actual workflow ID
 $workflowId = 'workflows/youraccount/fantasy-character-generator';
+
+// Replace 'comfy/youraccount/fantasy-character-generator' with your actual ComfyUI ID
+$workflowId = 'comfy/youraccount/fantasy-character-generator';
+
 $input = [
     'input' => [
         'character_description' => 'A brave elven warrior with long, flowing hair and a glowing magical sword.',
