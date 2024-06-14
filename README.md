@@ -11,8 +11,8 @@ This is a framework-agnostic PHP client for Fal AI built on the amazing Saloon v
 - Response Data
 - Webhooks
 - Generation Methods
-    - get
     - create
+    - workflow
 
 ## 🚀 Quick start
 
@@ -26,10 +26,7 @@ Create a new FalAI instance
 
 ```bash
 use MarceloEatWorld\FalAI\FalAI;
-
-$falAI = new FalAI(
-    apiKey: $_ENV['FAL_AI_API_KEY'],
-);
+use MarceloEatWorld\FalAI\Data\GenerationData;
 ```
 Then use it to generate an image
 
@@ -85,14 +82,11 @@ $data->requestId; // bf1bb655-9027-4d01-ac38-f85e0cb007dc
 
 ## Using Workflows
 
-In addition to generating images using predefined models, you can also use custom workflows with the `getWorkflow` method. Here's an example:
+In addition to generating images using predefined models, you can also use custom workflows with the `workflow` method. Here's an example:
 
 ```bash
 use MarceloEatWorld\FalAI\FalAI;
-
-$falAI = new FalAI(
-    apiKey: $_ENV['FAL_AI_API_KEY'],
-);
+use MarceloEatWorld\FalAI\Data\GenerationData;
 
 $workflowId = 'workflows/youraccount/fantasy-character-generator';
 $input = [
