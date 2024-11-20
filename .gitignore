@@ -1,0 +1,15 @@
+/.DS_Store
+/.phpunit.result.cache
+/.phpunit.cache
+/.php-cs-fixer.cache
+/.php-cs-fixer.php
+/composer.lock
+/phpunit.xml
+/.idea/
+*.swp
+*.swo
+/tests/
+/vendor/
+.env
+test.php
+documentations.txt
