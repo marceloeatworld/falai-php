@@ -19,7 +19,7 @@ class CreateRequest extends Request implements HasBody
     {
         $parts = explode('/', $path);
         if (count($parts) > 2 && $parts[0] === 'fal-ai') {
-            return $parts[0] . '/' . $parts[1];
+            return implode('/', $parts);
         }
         return $path;
     }
