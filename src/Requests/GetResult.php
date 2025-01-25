@@ -15,7 +15,7 @@ class GetResult extends Request
     {
         $parts = explode('/', $path);
         if (count($parts) > 2 && $parts[0] === 'fal-ai') {
-            return implode('/', $parts);
+            return $parts[0] . '/' . $parts[1];
         }
         return $path;
     }
