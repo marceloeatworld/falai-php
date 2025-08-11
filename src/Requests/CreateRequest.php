@@ -15,10 +15,6 @@ class CreateRequest extends Request implements HasBody
 
     protected Method $method = Method::POST;
 
-    protected function getBasePath(string $path): string 
-    {
-        return $path;
-    }
 
     public function __construct(
         protected string $model,
@@ -29,7 +25,7 @@ class CreateRequest extends Request implements HasBody
 
     public function resolveEndpoint(): string
     {
-        return $this->getBasePath($this->model);
+        return $this->model;
     }
 
     protected function defaultBody(): array

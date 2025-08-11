@@ -11,14 +11,6 @@ class CancelRequest extends Request
 {
     protected Method $method = Method::PUT;
 
-    protected function getBasePath(string $path): string 
-    {
-        $parts = explode('/', $path);
-        if (count($parts) > 2 && $parts[0] === 'fal-ai') {
-            return $parts[0] . '/' . $parts[1];
-        }
-        return $path;
-    }
 
     public function __construct(
         protected string $model,
@@ -28,8 +20,7 @@ class CancelRequest extends Request
 
     public function resolveEndpoint(): string
     {
-        $basePath = $this->getBasePath($this->model);
-        return sprintf('%s/requests/%s/cancel', $basePath, $this->requestId);
+        return sprintf('%s/requests/%s/cancel', $this->model, $this->requestId);
     }
 
     public function createDtoFromResponse(Response $response): GenerationData

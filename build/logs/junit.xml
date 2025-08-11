@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="MarceloEatWorld\FalAI\Tests\IntegrationTest" file="/home/marcelo/falai-php/tests/IntegrationTest.php" tests="9" assertions="19" errors="0" failures="3" skipped="1" time="8.244230">
+    <testcase name="testCreateLLMGeneration" file="/home/marcelo/falai-php/tests/IntegrationTest.php" line="37" class="MarceloEatWorld\FalAI\Tests\IntegrationTest" classname="MarceloEatWorld.FalAI.Tests.IntegrationTest" assertions="4" time="2.790330">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">MarceloEatWorld\FalAI\Tests\IntegrationTest::testCreateLLMGeneration
+Failed asserting that an array contains 'ERROR'.
+
+/home/marcelo/falai-php/tests/IntegrationTest.php:54</failure>
+    </testcase>
+    <testcase name="testCheckStatusWithLogs" file="/home/marcelo/falai-php/tests/IntegrationTest.php" line="66" class="MarceloEatWorld\FalAI\Tests\IntegrationTest" classname="MarceloEatWorld.FalAI.Tests.IntegrationTest" assertions="3" time="0.779822"/>
+    <testcase name="testGetResult" file="/home/marcelo/falai-php/tests/IntegrationTest.php" line="110" class="MarceloEatWorld\FalAI\Tests\IntegrationTest" classname="MarceloEatWorld.FalAI.Tests.IntegrationTest" assertions="2" time="1.013439"/>
+    <testcase name="testCancelRequest" file="/home/marcelo/falai-php/tests/IntegrationTest.php" line="150" class="MarceloEatWorld\FalAI\Tests\IntegrationTest" classname="MarceloEatWorld.FalAI.Tests.IntegrationTest" assertions="3" time="0.718272"/>
+    <testcase name="testSynchronousRequest" file="/home/marcelo/falai-php/tests/IntegrationTest.php" line="177" class="MarceloEatWorld\FalAI\Tests\IntegrationTest" classname="MarceloEatWorld.FalAI.Tests.IntegrationTest" assertions="3" time="0.920991"/>
+    <testcase name="testWebhookConfiguration" file="/home/marcelo/falai-php/tests/IntegrationTest.php" line="200" class="MarceloEatWorld\FalAI\Tests\IntegrationTest" classname="MarceloEatWorld.FalAI.Tests.IntegrationTest" assertions="1" time="0.643107"/>
+    <testcase name="testErrorHandling" file="/home/marcelo/falai-php/tests/IntegrationTest.php" line="221" class="MarceloEatWorld\FalAI\Tests\IntegrationTest" classname="MarceloEatWorld.FalAI.Tests.IntegrationTest" assertions="1" time="0.587532">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">MarceloEatWorld\FalAI\Tests\IntegrationTest::testErrorHandling
+Failed asserting that false is true.
+
+/home/marcelo/falai-php/tests/IntegrationTest.php:232</failure>
+    </testcase>
+    <testcase name="testStreamStatus" file="/home/marcelo/falai-php/tests/IntegrationTest.php" line="244" class="MarceloEatWorld\FalAI\Tests\IntegrationTest" classname="MarceloEatWorld.FalAI.Tests.IntegrationTest" assertions="2" time="0.790381">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">MarceloEatWorld\FalAI\Tests\IntegrationTest::testStreamStatus
+Failed asserting that an array is not empty.
+
+/home/marcelo/falai-php/tests/IntegrationTest.php:275</failure>
+    </testcase>
+    <testcase name="testImageGeneration" file="/home/marcelo/falai-php/tests/IntegrationTest.php" line="287" class="MarceloEatWorld\FalAI\Tests\IntegrationTest" classname="MarceloEatWorld.FalAI.Tests.IntegrationTest" assertions="0" time="0.000355">
+      <skipped/>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -28,4 +28,13 @@ class FalAI extends Connector
     {
         return new GenerationsResource($this);
     }
+
+    /**
+     * Get a synchronous client for immediate responses
+     * Note: Only use for fast operations that complete quickly
+     */
+    public function synchronous(): FalAISynchronous
+    {
+        return new FalAISynchronous($this->apiKey);
+    }
 }

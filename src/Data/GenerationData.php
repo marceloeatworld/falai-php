@@ -3,6 +3,7 @@
 namespace MarceloEatWorld\FalAI\Data;
 
 use Exception;
+use MarceloEatWorld\FalAI\Enums\RequestStatus;
 use Saloon\Http\Response;
 
 final class GenerationData
@@ -12,9 +13,13 @@ final class GenerationData
         public ?string $responseUrl,
         public ?string $statusUrl,
         public ?string $cancelUrl,
-        public ?string $status,
+        public ?RequestStatus $status,
         public ?array $payload,
         public ?string $error,
+        public ?int $queuePosition = null,
+        public ?array $logs = null,
+        public ?array $metrics = null,
+        public ?string $gatewayRequestId = null,
     ) {
     }
 
@@ -27,9 +32,24 @@ final class GenerationData
                 throw new Exception("Empty response body");
             }
 
+            // Check if response is HTML (error page) rather than JSON
+            if (str_starts_with(trim($rawBody), '<') || str_contains($rawBody, '<!DOCTYPE')) {
+                // Extract error message from HTML if possible
+                if (preg_match('/<title>(\d+):\s*([^<]+)<\/title>/i', $rawBody, $matches)) {
+                    throw new Exception("HTTP {$matches[1]}: {$matches[2]}");
+                } else if (preg_match('/(\d{3}):\s*([^\n]+)/', $rawBody, $matches)) {
+                    throw new Exception("HTTP {$matches[1]}: {$matches[2]}");
+                }
+                throw new Exception("Invalid response format (HTML received instead of JSON)");
+            }
+
             // On tente de parser le JSON avec un contrôle d'erreur
             $data = json_decode($rawBody, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
+                // Try to extract error from raw body if it looks like an error message
+                if (preg_match('/^(\d{3}):\s*(.+)$/s', trim($rawBody), $matches)) {
+                    throw new Exception("HTTP {$matches[1]}: {$matches[2]}");
+                }
                 throw new Exception("JSON decode error: " . json_last_error_msg());
             }
 
@@ -40,35 +60,46 @@ final class GenerationData
                     responseUrl: $data['response_url'] ?? null,
                     statusUrl: $data['status_url'] ?? null,
                     cancelUrl: $data['cancel_url'] ?? null,
-                    status: 'ERROR',
-                    payload: null,
-                    error: $data['error']
+                    status: RequestStatus::ERROR,
+                    payload: $data['payload'] ?? null,
+                    error: $data['error'],
+                    gatewayRequestId: $data['gateway_request_id'] ?? null
                 );
             }
 
             // Pour les réponses de statut
             if (isset($data['status'])) {
+                $status = RequestStatus::tryFrom($data['status']) ?? RequestStatus::ERROR;
+                
                 return new self(
                     requestId: $data['request_id'] ?? null,
                     responseUrl: $data['response_url'] ?? null,
                     statusUrl: $data['status_url'] ?? null,
                     cancelUrl: $data['cancel_url'] ?? null,
-                    status: $data['status'],
-                    payload: $data['response'] ?? null,
-                    error: null
+                    status: $status,
+                    payload: $data['response'] ?? $data['output'] ?? null,
+                    error: null,
+                    queuePosition: $data['queue_position'] ?? null,
+                    logs: $data['logs'] ?? null,
+                    metrics: $data['metrics'] ?? null
                 );
             }
 
             // Si on a un request_id, c'est probablement une réponse de création
             if (isset($data['request_id'])) {
+                $status = isset($data['status']) 
+                    ? (RequestStatus::tryFrom($data['status']) ?? null)
+                    : null;
+                    
                 return new self(
                     requestId: $data['request_id'],
                     responseUrl: $data['response_url'] ?? null,
                     statusUrl: $data['status_url'] ?? null,
                     cancelUrl: $data['cancel_url'] ?? null,
-                    status: isset($data['status']) ? $data['status'] : null,
+                    status: $status,
                     payload: null,
-                    error: null
+                    error: null,
+                    gatewayRequestId: $data['gateway_request_id'] ?? null
                 );
             }
 
@@ -78,7 +109,7 @@ final class GenerationData
                 responseUrl: null,
                 statusUrl: null,
                 cancelUrl: null,
-                status: 'COMPLETED',
+                status: RequestStatus::COMPLETED,
                 payload: $data,
                 error: null
             );
@@ -94,7 +125,7 @@ final class GenerationData
                 responseUrl: null,
                 statusUrl: null,
                 cancelUrl: null,
-                status: 'ERROR',
+                status: RequestStatus::ERROR,
                 payload: null,
                 error: $e->getMessage()
             );
@@ -103,14 +134,50 @@ final class GenerationData
 
     public function toArray(): array
     {
-        return [
+        return array_filter([
             'requestId' => $this->requestId,
             'responseUrl' => $this->responseUrl,
             'statusUrl' => $this->statusUrl,
             'cancelUrl' => $this->cancelUrl,
-            'status' => $this->status,
+            'status' => $this->status?->value,
             'payload' => $this->payload,
             'error' => $this->error,
-        ];
+            'queuePosition' => $this->queuePosition,
+            'logs' => $this->logs,
+            'metrics' => $this->metrics,
+            'gatewayRequestId' => $this->gatewayRequestId,
+        ], fn($value) => $value !== null);
+    }
+
+    /**
+     * Check if the request is still processing
+     */
+    public function isProcessing(): bool
+    {
+        return $this->status?->isProcessing() ?? false;
+    }
+
+    /**
+     * Check if the request has finished
+     */
+    public function isFinished(): bool
+    {
+        return $this->status?->isFinished() ?? false;
+    }
+
+    /**
+     * Check if the request completed successfully
+     */
+    public function isSuccess(): bool
+    {
+        return $this->status?->isSuccess() ?? false;
+    }
+
+    /**
+     * Check if the request has an error
+     */
+    public function hasError(): bool
+    {
+        return $this->status?->hasError() ?? !empty($this->error);
     }
 }

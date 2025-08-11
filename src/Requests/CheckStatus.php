@@ -11,30 +11,22 @@ class CheckStatus extends Request
 {
     protected Method $method = Method::GET;
 
-    protected function getBasePath(string $path): string 
-    {
-        $parts = explode('/', $path);
-        if (count($parts) > 2 && $parts[0] === 'fal-ai') {
-            return $parts[0] . '/' . $parts[1];
-        }
-        return $path;
-    }
 
     public function __construct(
         protected string $model,
         protected string $requestId,
+        protected bool $includeLogs = false,
     ) {
     }
 
     public function resolveEndpoint(): string
     {
-        $basePath = $this->getBasePath($this->model);
-        return sprintf('%s/requests/%s/status', $basePath, $this->requestId);
+        return sprintf('%s/requests/%s/status', $this->model, $this->requestId);
     }
 
     protected function defaultQuery(): array
     {
-        return ['logs' => '1'];
+        return $this->includeLogs ? ['logs' => '1'] : [];
     }
 
     public function createDtoFromResponse(Response $response): GenerationData
