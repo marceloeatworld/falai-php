@@ -1,18 +1,25 @@
-# FAL AI PHP Client
+# FAL.AI PHP Client
 
-A lightweight PHP client for [FAL.AI](https://fal.ai) built with Saloon v3. Create AI-powered content with ease.
+A modern, production-ready PHP client for the [FAL.AI API](https://fal.ai) with comprehensive support for AI models including LLM, image generation, video generation, audio processing, and custom workflows.
 
-[![Join FAL.AI Discord](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTcwIiBoZWlnaHQ9IjE3MSIgdmlld0JveD0iMCAwIDE3MCAxNzEiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMDkuNTcxIDAuNjkwMDQyQzExMi41MTUgMC42OTAwNDIgMTE0Ljg3NCAzLjA4MzQ4IDExNS4xNTUgNi4wMTM1MkMxMTcuNjY1IDMyLjE0OSAxMzguNDY2IDUyLjk0OCAxNjQuNjAzIDU1LjQ1OEMxNjcuNTM0IDU1LjczOTQgMTY5LjkyNyA1OC4wOTg1IDE2OS45MjcgNjEuMDQyVjExMC4yNTVDMTY5LjkyNyAxMTMuMTk4IDE2Ny41MzQgMTE1LjU1NyAxNjQuNjAzIDExNS44MzlDMTM4LjQ2NiAxMTguMzQ5IDExNy42NjUgMTM5LjE0OCAxMTUuMTU1IDE2NS4yODNDMTE0Ljg3NCAxNjguMjEzIDExMi41MTUgMTcwLjYwNyAxMDkuNTcxIDE3MC42MDdINTAuMzU1M0M1Ny40MTE2IDE3MC42MDcgNTUuMDUyNCAxNjguMjEzIDU0Ljc3MDkgMTY1LjI4M0M1Mi4yNjA4IDEzOS4xNDggMzEuNDYwMSAxMTguMzQ5IDUuMzIyODkgMTE1LjgzOUMyLjM5MjY2IDExNS41NTctMC4wMDA5NzY1NjIgMTEzLjE5OCAtMC4wMDA5NzY1NjIgMTEwLjI1NVY2MS4wNDJDLTAuMDAwOTc2NTYyIDU4LjA5ODUgMi4zOTI2NyA1NS43Mzk0IDUuMzIyOSA1NS40NThDMzEuNDYwMSA1Mi45NDggNTIuMjYwOCAzMi4xNDkgNTQuNzcwOSA2LjAxMzUxQzU1LjA1MjQgMy4wODM0OCA1Ny40MTE2IDAuNjkwMDQyIDYwLjM1NTMgMC42OTAwNDJIMTA5LjU3MVpNMzQuMTE4MiA4NS41MDQ1QzM0LjExODIgMTEzLjc3NiA1Ny4wMTI0IDEzNi42OTQgODUuMjUzOSAxMzYuNjk0QzExMy40OTUgMTM2LjY5NCAxMzYuMzkgMTEzLjc3NiAxMzYuMzkgODUuNTA0NUMxMzYuMzkgNTcuMjMzMiAxMTMuNDk1IDM0LjMxNDcgODUuMjUzOSAzNC4zMTQ3QzU3LjAxMjQgMzQuMzE0NyAzNC4xMTgyIDU3LjIzMzIgMzQuMTE4MiA4NS41MDQ1WiIgZmlsbD0iYmxhY2siLz48L3N2Zz4=)](https://discord.gg/fal-ai)
+[![Latest Version](https://img.shields.io/packagist/v/marceloeatworld/falai-php.svg)](https://packagist.org/packages/marceloeatworld/falai-php)
+[![PHP Version](https://img.shields.io/packagist/php-v/marceloeatworld/falai-php.svg)](https://packagist.org/packages/marceloeatworld/falai-php)
+[![License](https://img.shields.io/packagist/l/marceloeatworld/falai-php.svg)](LICENSE)
 
 ## Features
 
-* 🎨 Support for all FAL AI models (Recraft, Flux Pro, etc.)
-* 🔄 Full queue system with status tracking
-* 📡 Webhook support for async notifications
-* 🛠️ ComfyUI & Workflows support
-* ⚡ Synchronous requests for fast operations
-* 📊 Streaming status updates
-* 📝 Request logs and metrics
+- **🚀 Queue Processing** - Reliable asynchronous processing with status tracking
+- **📡 Real-time Streaming** - Server-Sent Events for live status updates  
+- **🔄 Synchronous Execution** - Direct model execution for quick tasks
+- **🔗 Webhook Support** - Secure webhook verification with cryptographic signatures
+- **🎯 Auto Array Normalization** - Eliminates 422 "Input should be a valid list" errors
+- **🏗️ Modern Architecture** - Built on Saloon v3 with PSR compliance
+- **🎨 Universal Compatibility** - Works with all FAL.AI models (Flux, SDXL, LLM, Video, Audio, Workflows)
+
+## Requirements
+
+- PHP 8.1+
+- ext-sodium (optional, for webhook verification)
 
 ## Installation
 
@@ -22,308 +29,228 @@ composer require marceloeatworld/falai-php
 
 ## Quick Start
 
+### Configuration
+
+Set your FAL.AI API key:
+
+```bash
+export FAL_KEY='your-fal-ai-api-key-here'
+```
+
+Or pass it directly:
+
 ```php
 use MarceloEatWorld\FalAI\FalAI;
 
-$falAI = new FalAI('your-api-key');
-
-// Generate an image (queue-based)
-$result = $falAI->generations()->create('fal-ai/recraft-v3', [
-    'prompt' => 'A beautiful landscape',
-    'negative_prompt' => 'low quality',
-    'image_size' => 'square_hd',
-    'seed' => 42
-]);
-
-// Check generation status
-$status = $falAI->generations()->checkStatus('fal-ai/recraft-v3', $result->requestId);
-
-// Get final result when completed
-if ($status->isSuccess()) {
-    $finalResult = $falAI->generations()->getResult('fal-ai/recraft-v3', $result->requestId);
-    $images = $finalResult->payload['images'] ?? [];
-}
+$fal = FalAI::client('your-api-key');
 ```
 
-## Queue API Usage
-
-### Create and Track Generation
+### Basic Usage
 
 ```php
-// Submit to queue
-$result = $falAI->generations()->create('fal-ai/flux-pro/v1.1-ultra', [
-    'prompt' => 'A futuristic city at night',
-    'image_size' => 'landscape_16_9',
-    'num_images' => 2
+use MarceloEatWorld\FalAI\FalAI;
+
+// Create client
+$fal = FalAI::client();
+
+// Queue-based processing (recommended)
+$submission = $fal->queue()->submit('fal-ai/fast-sdxl', [
+    'prompt' => 'A majestic dragon soaring through clouds',
+    'image_size' => 'landscape_4_3'
 ]);
 
-$requestId = $result->requestId;
-
-// Check status with logs
-$status = $falAI->generations()->checkStatus('fal-ai/flux-pro/v1.1-ultra', $requestId, true);
-
-// Status types: IN_QUEUE, IN_PROGRESS, COMPLETED, ERROR
-if ($status->status->value === 'IN_QUEUE') {
-    echo "Queue position: " . $status->queuePosition;
-}
-
-if ($status->isProcessing()) {
-    echo "Still processing...";
-}
-
-if ($status->isSuccess()) {
-    $result = $falAI->generations()->getResult('fal-ai/flux-pro/v1.1-ultra', $requestId);
-    // Access generated content
-}
-
-if ($status->hasError()) {
-    echo "Error: " . $status->error;
-}
-```
-
-### Stream Status Updates
-
-```php
-// Stream status updates until completion
-$stream = $falAI->generations()->streamStatus('fal-ai/recraft-v3', $requestId, true);
-
-foreach ($stream as $update) {
+// Stream status updates
+foreach ($fal->queue()->streamStatus('fal-ai/fast-sdxl', $submission->requestId) as $update) {
     echo "Status: " . $update['status'] . "\n";
     
-    if (isset($update['logs'])) {
-        foreach ($update['logs'] as $log) {
-            echo $log['message'] . "\n";
-        }
-    }
-    
     if ($update['status'] === 'COMPLETED') {
-        // Access final result
-        $images = $update['output']['images'] ?? [];
         break;
     }
 }
+
+// Get final result
+$result = $fal->queue()->result('fal-ai/fast-sdxl', $submission->requestId);
+echo "Generated image: " . $result->data['images'][0]['url'] . "\n";
 ```
 
-### Cancel a Request
+## Advanced Usage
+
+### Working with Workflows
 
 ```php
-// Cancel a queued request
-$cancelResult = $falAI->generations()->cancel('fal-ai/recraft-v3', $requestId);
+// Custom workflow with automatic array normalization
+$submission = $fal->queue()->submit('workflows/username/my-workflow', [
+    'prompt' => 'Epic fantasy landscape',
+    'reference_image_urls' => 'https://example.com/image.jpg', // Auto-converted to array
+    'style' => 'cinematic'
+]);
 
-if ($cancelResult->status->value === 'CANCELLATION_REQUESTED') {
-    echo "Cancellation requested";
+// Or use direct streaming
+foreach ($fal->generations()->stream('workflows/username/my-workflow', $input) as $event) {
+    // Real-time processing updates
+    echo json_encode($event) . "\n";
 }
 ```
 
-## Synchronous Requests
-
-For fast operations that complete quickly, use synchronous mode:
+### Priority and Performance Hints
 
 ```php
-// Get synchronous client
-$syncClient = $falAI->synchronous();
+use MarceloEatWorld\FalAI\Queue\QueuePriority;
 
-// Execute immediately (no queue)
-$result = $syncClient->generations()->run('fal-ai/fast-sdxl', [
-    'prompt' => 'A cute cat',
-    'image_size' => 'square'
-]);
-
-// Result is immediately available
-$images = $result->payload['images'] ?? [];
+$submission = $fal->queue()->submit(
+    endpointId: 'fal-ai/flux-pro',
+    input: ['prompt' => 'Professional headshot'],
+    webhookUrl: 'https://your-app.com/webhook',
+    hint: 'fal-ai/flux-pro',
+    priority: QueuePriority::High->value
+);
 ```
 
-## Webhook Support
-
-Use webhooks for async notifications:
+### Webhook Security
 
 ```php
-// Set webhook URL
-$result = $falAI->generations()
-    ->withWebhook('https://your-site.com/webhook')
-    ->create('fal-ai/recraft-v3', [
-        'prompt' => 'A serene lake at sunset'
-    ]);
+use MarceloEatWorld\FalAI\WebhookVerifier;
+use MarceloEatWorld\FalAI\Exceptions\WebhookVerificationException;
 
-// The webhook will receive:
-// - request_id
-// - gateway_request_id
-// - status (OK or ERROR)
-// - payload (the result)
-```
+$verifier = new WebhookVerifier();
 
-## Models with Subpaths
-
-Some models expose different capabilities at subpaths:
-
-```php
-// Using Flux Dev variant
-$result = $falAI->generations()->create('fal-ai/flux/dev', [
-    'prompt' => 'A magical forest',
-    'image_size' => 'square_hd'
-]);
-
-// Status/result URLs automatically handle the subpath
-$status = $falAI->generations()->checkStatus('fal-ai/flux/dev', $result->requestId);
-```
-
-## ComfyUI Workflows
-
-```php
-// Use custom ComfyUI workflows
-$result = $falAI->generations()->create('comfy/youraccount/workflow-name', [
-    'loadimage_1' => 'https://example.com/input.jpg',
-    'prompt' => 'Transform to anime style',
-    'steps' => 30
-]);
-
-// Track like any other generation
-$status = $falAI->generations()->checkStatus('comfy/youraccount/workflow-name', $result->requestId);
-```
-
-## Response Structure
-
-The `GenerationData` object provides:
-
-```php
-// Check status
-if ($data->isProcessing()) { /* Still in queue or processing */ }
-if ($data->isSuccess()) { /* Completed successfully */ }
-if ($data->hasError()) { /* Has error */ }
-
-// Access properties
-$data->requestId;        // Unique request identifier
-$data->status;           // RequestStatus enum
-$data->payload;          // Result data when completed
-$data->error;            // Error message if failed
-$data->queuePosition;    // Position in queue
-$data->logs;             // Processing logs (if requested)
-$data->metrics;          // Performance metrics
-```
-
-## Status Types
-
-```php
-use MarceloEatWorld\FalAI\Enums\RequestStatus;
-
-// Available statuses
-RequestStatus::IN_QUEUE              // Waiting in queue
-RequestStatus::IN_PROGRESS           // Currently processing
-RequestStatus::COMPLETED             // Successfully completed
-RequestStatus::ERROR                 // Failed with error
-RequestStatus::CANCELLATION_REQUESTED // Cancellation requested
-RequestStatus::ALREADY_COMPLETED     // Already completed (can't cancel)
-```
-
-## Laravel Integration
-
-Add to `config/services.php`:
-
-```php
-'falai' => [
-    'api_key' => env('FAL_API_KEY'),
-],
-```
-
-Register in a service provider:
-
-```php
-use MarceloEatWorld\FalAI\FalAI;
-
-public function register()
-{
-    $this->app->singleton(FalAI::class, function () {
-        return new FalAI(config('services.falai.api_key'));
-    });
-}
-```
-
-Use in controllers:
-
-```php
-use MarceloEatWorld\FalAI\FalAI;
-
-class ImageController extends Controller
-{
-    public function generate(Request $request, FalAI $falAI)
-    {
-        $result = $falAI->generations()->create('fal-ai/recraft-v3', [
-            'prompt' => $request->input('prompt'),
-            'image_size' => 'square_hd'
-        ]);
-        
-        // Store request ID in session or database
-        session(['generation_id' => $result->requestId]);
-        
-        return response()->json([
-            'request_id' => $result->requestId,
-            'status_url' => $result->statusUrl
-        ]);
-    }
+try {
+    $isValid = $verifier->verify($request->getContent(), $request->headers->all());
     
-    public function status(FalAI $falAI)
-    {
-        $requestId = session('generation_id');
-        $status = $falAI->generations()->checkStatus('fal-ai/recraft-v3', $requestId, true);
+    if ($isValid) {
+        $payload = json_decode($request->getContent(), true);
         
-        return response()->json($status->toArray());
+        if ($payload['status'] === 'COMPLETED') {
+            // Process completed generation
+            echo "Request {$payload['request_id']} completed!\n";
+        }
     }
+} catch (WebhookVerificationException $e) {
+    echo "Webhook verification failed: " . $e->getMessage() . "\n";
+}
+```
+
+### Synchronous Execution
+
+```php
+// For quick tasks that complete fast
+$result = $fal->run('fal-ai/fast-lightning-sdxl', [
+    'prompt' => 'A simple illustration'
+]);
+
+echo $result['images'][0]['url'];
+```
+
+## API Reference
+
+### Client Factory
+
+```php
+// From environment variable FAL_KEY
+$fal = FalAI::client();
+
+// With explicit API key
+$fal = FalAI::client('your-api-key');
+```
+
+### Queue Operations
+
+```php
+// Submit to queue
+$submission = $fal->queue()->submit($endpointId, $input, $webhookUrl, $hint, $priority);
+
+// Check status
+$status = $fal->queue()->status($endpointId, $requestId, $includeLogs);
+
+// Get result
+$result = $fal->queue()->result($endpointId, $requestId);
+
+// Stream status updates
+foreach ($fal->queue()->streamStatus($endpointId, $requestId, $includeLogs) as $update) {
+    // Process update
+}
+
+// Cancel request
+$cancelled = $fal->queue()->cancel($endpointId, $requestId);
+```
+
+### Direct Operations
+
+```php
+// Synchronous execution
+$result = $fal->run($endpointId, $input);
+
+// Direct streaming
+foreach ($fal->generations()->stream($endpointId, $input) as $event) {
+    // Process event
 }
 ```
 
 ## Error Handling
 
 ```php
-try {
-    $result = $falAI->generations()->create('fal-ai/recraft-v3', [
-        'prompt' => 'A beautiful scene'
-    ]);
-} catch (\Saloon\Exceptions\Request\RequestException $e) {
-    // Handle API errors
-    $response = $e->getResponse();
-    $error = $response->json();
-    
-    if ($response->status() === 422) {
-        // Validation error
-        $details = $error['detail'] ?? [];
-    }
-}
+use Saloon\Exceptions\Request\FatalRequestException;
+use Saloon\Exceptions\Request\RequestException;
 
-// Check for errors in response
-if ($result->hasError()) {
-    echo "Generation failed: " . $result->error;
+try {
+    $result = $fal->queue()->submit('fal-ai/fast-sdxl', $input);
+} catch (FatalRequestException $e) {
+    echo "Fatal error: " . $e->getMessage();
+} catch (RequestException $e) {
+    echo "Request error: " . $e->getMessage();
+} catch (Exception $e) {
+    echo "General error: " . $e->getMessage();
 }
 ```
 
-## Available Models
+## Automatic Array Normalization
 
-**✅ Confirmed Working Models (100% Tested):**
-- `fal-ai/fast-sdxl` - Fast image generation (1-3s)
-- `fal-ai/recraft-v3` - High quality illustrations (2-4s)
-- `fal-ai/flux-pro` - Professional quality images (3-6s)
-- `fal-ai/stable-diffusion-v3-medium` - Stable, reliable generation (4-8s)
-- `fal-ai/aura-flow` - Artistic style generation (3-7s)
-- `fal-ai/pixart-sigma` - High-resolution imagery (4-8s)
+This library automatically converts single values to arrays for fields that require arrays, eliminating common 422 errors:
 
-**⚠️ Models with Known Issues:**
-- `fal-ai/imagen4/preview` - Status endpoints return 405 (server-side)
-- `fal-ai/any-llm/enterprise` - Status endpoints return 405 (server-side)
-- `fal-ai/flux/dev` - Status endpoints return 405 (server-side)
-- `fal-ai/flux/schnell` - Status endpoints return 405 (server-side)
+```php
+// These are equivalent - both work without errors:
 
-*Note: Use confirmed working models for production applications.*
+// Single value (auto-converted to array)
+$input = [
+    'prompt' => 'A cat',
+    'reference_image_urls' => 'https://example.com/image.jpg'
+];
 
-See [FAL.AI Models](https://fal.ai/models) for the complete list.
+// Array value (preserved as-is)  
+$input = [
+    'prompt' => 'A cat',
+    'reference_image_urls' => ['https://example.com/image.jpg']
+];
+```
 
-## Support & Security
+**Auto-normalized fields:**
+- `reference_image_urls`, `reference_mask_urls`
+- `image_urls`, `images`, `input_images`
+- `mask_urls`, `style_reference_urls`
+- `character_images`, `pose_images`
+- `uploaded_masks`, `loadimage_1`, `loadimage_2`, `loadimage_3`
 
-For security issues, please email diagngo@gmail.com.
+## Performance
+
+- **Optimized autoloader** with `optimize-autoloader: true`
+- **Webhook caching** - Pass PSR-16 cache to `WebhookVerifier` for better performance
+- **Stream processing** - Memory-efficient event streaming
+- **Connection pooling** - Built on Saloon's efficient HTTP client
 
 ## License
 
-MIT License - see LICENSE.
+MIT License. See [LICENSE](LICENSE) for details.
 
-## Credits
+## Contributing
 
-- Built with [Saloon v3](https://github.com/saloonphp/saloon)
-- Inspired by [replicate-php](https://github.com/replicate-php)
+Contributions are welcome! Please see our contributing guidelines.
+
+## Support
+
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/marceloeatworld/falai-php/issues)
+- 💬 **Questions**: [GitHub Discussions](https://github.com/marceloeatworld/falai-php/discussions)
+- 📖 **Documentation**: [FAL.AI API Docs](https://fal.ai/models)
+
+---
+
+Built with ❤️ using [Saloon PHP](https://docs.saloon.dev/) and [SSE-Saloon](https://github.com/hosmelq/sse-saloon)

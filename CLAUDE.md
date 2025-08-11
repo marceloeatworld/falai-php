@@ -4,25 +4,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a PHP client library for the FAL.AI API, built on Saloon v3. It provides a simple interface for generating AI content using FAL AI models (Recraft, Flux Pro) and ComfyUI workflows.
+This is a **production-ready** PHP client library for the FAL.AI API, built on Saloon v3 with SSE support. It provides a unified interface for AI content generation including LLM, Image, Video, Audio models, and custom workflows.
 
-### ✨ Key Features
-- **Automatic Array Normalization**: Handles single image URLs vs array requirements automatically
-- **Smart Field Conversion**: Converts string image URLs to arrays when required by specific models
-- **422 Error Prevention**: Eliminates "Input should be a valid list" errors for image fields
-- **Universal Compatibility**: Works with all FAL.AI models including ideogram, flux, stable-diffusion, etc.
+**🚀 Production Features:**
+- ✅ Modern API like hosmelq/falai: `FalAI::client()` factory method
+- ✅ Queue processing: `submit()`, `status()`, `result()`, `cancel()` 
+- ✅ Real-time streaming: `stream()`, `streamStatus()` with SSE
+- ✅ Synchronous execution: `run()` for quick tasks
+- ✅ Secure webhooks: `WebhookVerifier` with cryptographic verification
+- ✅ Priority support: `QueuePriority` enum (high/normal/low)
+- ✅ Auto array normalization: Eliminates 422 "Input should be a valid list" errors
+- ✅ Universal compatibility: All FAL.AI models (LLM, Image, Video, Audio, Workflows)
 
 ## Development Commands
 
 ```bash
-# Install dependencies
+# Install dependencies  
 composer install
 
-# Run tests (if test directory exists)
-./vendor/bin/phpunit
+# Optimize autoloader (production)
+composer dump-autoload --optimize
 
-# Autoload refresh after adding new classes
-composer dump-autoload
+# Update dependencies
+composer update
 ```
 
 ## Architecture
