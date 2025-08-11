@@ -3,24 +3,32 @@
 namespace MarceloEatWorld\FalAI\Requests;
 
 use MarceloEatWorld\FalAI\Data\GenerationData;
+use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 use Saloon\Http\Response;
+use Saloon\Traits\Body\HasJsonBody;
 
-class GetResult extends Request
+class SynchronousRequest extends Request implements HasBody
 {
-    protected Method $method = Method::GET;
+    use HasJsonBody;
 
+    protected Method $method = Method::POST;
 
     public function __construct(
         protected string $model,
-        protected string $requestId,
+        protected array $input,
     ) {
     }
 
     public function resolveEndpoint(): string
     {
-        return sprintf('%s/requests/%s', $this->model, $this->requestId);
+        return $this->model;
+    }
+
+    protected function defaultBody(): array
+    {
+        return $this->input;
     }
 
     public function createDtoFromResponse(Response $response): GenerationData

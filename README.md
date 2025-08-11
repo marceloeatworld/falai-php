@@ -8,9 +8,11 @@ A lightweight PHP client for [FAL.AI](https://fal.ai) built with Saloon v3. Crea
 
 * 🎨 Support for all FAL AI models (Recraft, Flux Pro, etc.)
 * 🔄 Full queue system with status tracking
-* 📡 Webhook support
+* 📡 Webhook support for async notifications
 * 🛠️ ComfyUI & Workflows support
-* ⚡ Simple, intuitive API
+* ⚡ Synchronous requests for fast operations
+* 📊 Streaming status updates
+* 📝 Request logs and metrics
 
 ## Installation
 
@@ -25,84 +27,192 @@ use MarceloEatWorld\FalAI\FalAI;
 
 $falAI = new FalAI('your-api-key');
 
-// Generate an image
+// Generate an image (queue-based)
 $result = $falAI->generations()->create('fal-ai/recraft-v3', [
     'prompt' => 'A beautiful landscape',
     'negative_prompt' => 'low quality',
-    'image_size' => 'square_hd'
-    'seed' => '42'
+    'image_size' => 'square_hd',
+    'seed' => 42
 ]);
 
-// Check generation status using requestId
-$status = $falAI->generations()->checkStatus($result->requestId);
+// Check generation status
+$status = $falAI->generations()->checkStatus('fal-ai/recraft-v3', $result->requestId);
 
 // Get final result when completed
-$finalResult = $falAI->generations()->getResult($result->requestId);
+if ($status->isSuccess()) {
+    $finalResult = $falAI->generations()->getResult('fal-ai/recraft-v3', $result->requestId);
+    $images = $finalResult->payload['images'] ?? [];
+}
 ```
 
-## Models & Workflows
+## Queue API Usage
+
+### Create and Track Generation
 
 ```php
-// FAL AI Models
+// Submit to queue
 $result = $falAI->generations()->create('fal-ai/flux-pro/v1.1-ultra', [
-    'prompt' => 'A futuristic city',
-    'negative_prompt' => 'low quality',
-    'image_size' => 'square_hd'
-    'seed' => '42'
+    'prompt' => 'A futuristic city at night',
+    'image_size' => 'landscape_16_9',
+    'num_images' => 2
 ]);
 
-// ComfyUI Workflows
-$result = $falAI->generations()->create('comfy/youraccount/workflow', [
-    'loadimage_1' => 'https://example.com/image.jpg',
-    'prompt' => 'Make it anime style'
-    'seed' => '42'
-]);
+$requestId = $result->requestId;
 
-// Track any generation with requestId
-$status = $falAI->generations()->checkStatus($result->requestId);
+// Check status with logs
+$status = $falAI->generations()->checkStatus('fal-ai/flux-pro/v1.1-ultra', $requestId, true);
+
+// Status types: IN_QUEUE, IN_PROGRESS, COMPLETED, ERROR
+if ($status->status->value === 'IN_QUEUE') {
+    echo "Queue position: " . $status->queuePosition;
+}
+
+if ($status->isProcessing()) {
+    echo "Still processing...";
+}
+
+if ($status->isSuccess()) {
+    $result = $falAI->generations()->getResult('fal-ai/flux-pro/v1.1-ultra', $requestId);
+    // Access generated content
+}
+
+if ($status->hasError()) {
+    echo "Error: " . $status->error;
+}
 ```
 
-## Advanced Usage
+### Stream Status Updates
 
 ```php
-// Use webhooks
+// Stream status updates until completion
+$stream = $falAI->generations()->streamStatus('fal-ai/recraft-v3', $requestId, true);
+
+foreach ($stream as $update) {
+    echo "Status: " . $update['status'] . "\n";
+    
+    if (isset($update['logs'])) {
+        foreach ($update['logs'] as $log) {
+            echo $log['message'] . "\n";
+        }
+    }
+    
+    if ($update['status'] === 'COMPLETED') {
+        // Access final result
+        $images = $update['output']['images'] ?? [];
+        break;
+    }
+}
+```
+
+### Cancel a Request
+
+```php
+// Cancel a queued request
+$cancelResult = $falAI->generations()->cancel('fal-ai/recraft-v3', $requestId);
+
+if ($cancelResult->status->value === 'CANCELLATION_REQUESTED') {
+    echo "Cancellation requested";
+}
+```
+
+## Synchronous Requests
+
+For fast operations that complete quickly, use synchronous mode:
+
+```php
+// Get synchronous client
+$syncClient = $falAI->synchronous();
+
+// Execute immediately (no queue)
+$result = $syncClient->generations()->run('fal-ai/fast-sdxl', [
+    'prompt' => 'A cute cat',
+    'image_size' => 'square'
+]);
+
+// Result is immediately available
+$images = $result->payload['images'] ?? [];
+```
+
+## Webhook Support
+
+Use webhooks for async notifications:
+
+```php
+// Set webhook URL
 $result = $falAI->generations()
     ->withWebhook('https://your-site.com/webhook')
     ->create('fal-ai/recraft-v3', [
-        'prompt' => 'A serene lake'
-        'seed' => '42'
+        'prompt' => 'A serene lake at sunset'
     ]);
 
-// Cancel a generation using requestId
-$cancelled = $falAI->generations()->cancel($result->requestId);
+// The webhook will receive:
+// - request_id
+// - gateway_request_id
+// - status (OK or ERROR)
+// - payload (the result)
+```
+
+## Models with Subpaths
+
+Some models expose different capabilities at subpaths:
+
+```php
+// Using Flux Dev variant
+$result = $falAI->generations()->create('fal-ai/flux/dev', [
+    'prompt' => 'A magical forest',
+    'image_size' => 'square_hd'
+]);
+
+// Status/result URLs automatically handle the subpath
+$status = $falAI->generations()->checkStatus('fal-ai/flux/dev', $result->requestId);
+```
+
+## ComfyUI Workflows
+
+```php
+// Use custom ComfyUI workflows
+$result = $falAI->generations()->create('comfy/youraccount/workflow-name', [
+    'loadimage_1' => 'https://example.com/input.jpg',
+    'prompt' => 'Transform to anime style',
+    'steps' => 30
+]);
+
+// Track like any other generation
+$status = $falAI->generations()->checkStatus('comfy/youraccount/workflow-name', $result->requestId);
 ```
 
 ## Response Structure
 
-The `GenerationData` object contains:
-- `requestId`: Unique identifier for tracking the generation
-- `responseUrl`: URL to fetch the result
-- `statusUrl`: URL to check status
-- `cancelUrl`: URL to cancel generation
-- `status`: Current status (IN_QUEUE, IN_PROGRESS, COMPLETED, ERROR)
-- `payload`: Generation result data when completed
-- `error`: Error message if any
-
-## Tracking Generations
+The `GenerationData` object provides:
 
 ```php
-// Store the requestId after creation
-$requestId = $result->requestId;
+// Check status
+if ($data->isProcessing()) { /* Still in queue or processing */ }
+if ($data->isSuccess()) { /* Completed successfully */ }
+if ($data->hasError()) { /* Has error */ }
 
-// Later, check status
-$status = $falAI->generations()->checkStatus($requestId);
+// Access properties
+$data->requestId;        // Unique request identifier
+$data->status;           // RequestStatus enum
+$data->payload;          // Result data when completed
+$data->error;            // Error message if failed
+$data->queuePosition;    // Position in queue
+$data->logs;             // Processing logs (if requested)
+$data->metrics;          // Performance metrics
+```
 
-if ($status->status === 'COMPLETED') {
-    // Get the final result
-    $finalResult = $falAI->generations()->getResult($requestId);
-    // Access the generated images
-    $images = $finalResult->payload['images'] ?? [];
-}
+## Status Types
+
+```php
+use MarceloEatWorld\FalAI\Enums\RequestStatus;
+
+// Available statuses
+RequestStatus::IN_QUEUE              // Waiting in queue
+RequestStatus::IN_PROGRESS           // Currently processing
+RequestStatus::COMPLETED             // Successfully completed
+RequestStatus::ERROR                 // Failed with error
+RequestStatus::CANCELLATION_REQUESTED // Cancellation requested
+RequestStatus::ALREADY_COMPLETED     // Already completed (can't cancel)
 ```
 
 ## Laravel Integration
@@ -118,6 +228,8 @@ Add to `config/services.php`:
 Register in a service provider:
 
 ```php
+use MarceloEatWorld\FalAI\FalAI;
+
 public function register()
 {
     $this->app->singleton(FalAI::class, function () {
@@ -131,22 +243,77 @@ Use in controllers:
 ```php
 use MarceloEatWorld\FalAI\FalAI;
 
-public function generate(FalAI $falAI)
+class ImageController extends Controller
 {
-    $result = $falAI->generations()->create('fal-ai/recraft-v3', [
-        'prompt' => 'A mountain landscape'
-        'seed' => '42'
-    ]);
+    public function generate(Request $request, FalAI $falAI)
+    {
+        $result = $falAI->generations()->create('fal-ai/recraft-v3', [
+            'prompt' => $request->input('prompt'),
+            'image_size' => 'square_hd'
+        ]);
+        
+        // Store request ID in session or database
+        session(['generation_id' => $result->requestId]);
+        
+        return response()->json([
+            'request_id' => $result->requestId,
+            'status_url' => $result->statusUrl
+        ]);
+    }
     
-    // Store requestId for later use
-    $requestId = $result->requestId;
-}
-
-public function checkStatus(FalAI $falAI, string $requestId)
-{
-    return $falAI->generations()->checkStatus($requestId);
+    public function status(FalAI $falAI)
+    {
+        $requestId = session('generation_id');
+        $status = $falAI->generations()->checkStatus('fal-ai/recraft-v3', $requestId, true);
+        
+        return response()->json($status->toArray());
+    }
 }
 ```
+
+## Error Handling
+
+```php
+try {
+    $result = $falAI->generations()->create('fal-ai/recraft-v3', [
+        'prompt' => 'A beautiful scene'
+    ]);
+} catch (\Saloon\Exceptions\Request\RequestException $e) {
+    // Handle API errors
+    $response = $e->getResponse();
+    $error = $response->json();
+    
+    if ($response->status() === 422) {
+        // Validation error
+        $details = $error['detail'] ?? [];
+    }
+}
+
+// Check for errors in response
+if ($result->hasError()) {
+    echo "Generation failed: " . $result->error;
+}
+```
+
+## Available Models
+
+**✅ Confirmed Working Models (100% Tested):**
+- `fal-ai/fast-sdxl` - Fast image generation (1-3s)
+- `fal-ai/recraft-v3` - High quality illustrations (2-4s)
+- `fal-ai/flux-pro` - Professional quality images (3-6s)
+- `fal-ai/stable-diffusion-v3-medium` - Stable, reliable generation (4-8s)
+- `fal-ai/aura-flow` - Artistic style generation (3-7s)
+- `fal-ai/pixart-sigma` - High-resolution imagery (4-8s)
+
+**⚠️ Models with Known Issues:**
+- `fal-ai/imagen4/preview` - Status endpoints return 405 (server-side)
+- `fal-ai/any-llm/enterprise` - Status endpoints return 405 (server-side)
+- `fal-ai/flux/dev` - Status endpoints return 405 (server-side)
+- `fal-ai/flux/schnell` - Status endpoints return 405 (server-side)
+
+*Note: Use confirmed working models for production applications.*
+
+See [FAL.AI Models](https://fal.ai/models) for the complete list.
 
 ## Support & Security
 
