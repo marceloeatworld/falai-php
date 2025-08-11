@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a PHP client library for the FAL.AI API, built on Saloon v3. It provides a simple interface for generating AI content using FAL AI models (Recraft, Flux Pro) and ComfyUI workflows.
 
+### ✨ Key Features
+- **Automatic Array Normalization**: Handles single image URLs vs array requirements automatically
+- **Smart Field Conversion**: Converts string image URLs to arrays when required by specific models
+- **422 Error Prevention**: Eliminates "Input should be a valid list" errors for image fields
+- **Universal Compatibility**: Works with all FAL.AI models including ideogram, flux, stable-diffusion, etc.
+
 ## Development Commands
 
 ```bash
@@ -53,6 +59,49 @@ This aligns with the FAL.AI API specification where endpoints are: `{model_id}/r
 - Status responses with `status` field
 - Error responses with `error` field
 - Direct result responses
+
+### 🔧 Automatic Array Normalization
+
+**Problem Solved**: Many FAL.AI models require image fields as arrays, even for single images. This caused 422 "Input should be a valid list" errors.
+
+**Solution**: `GenerationsResource::normalizeArrayFields()` automatically converts:
+
+```php
+// Before (would cause 422 error):
+$input = [
+    'reference_image_urls' => 'single-image.jpg'  // String
+];
+
+// After (automatic conversion):
+$input = [
+    'reference_image_urls' => ['single-image.jpg']  // Array
+];
+```
+
+**Affected Fields** (automatically converted to arrays):
+- `reference_image_urls` - Reference images for generation
+- `reference_mask_urls` - Mask images for inpainting
+- `image_urls` - Input images for processing
+- `mask_urls` - Mask URLs for editing
+- `style_reference_urls` - Style reference images
+- `character_images` - Character reference images
+- `pose_images` - Pose reference images
+- `uploaded_masks` - Uploaded mask files
+
+**Usage**: No changes required in your code. Pass single strings or arrays - both work:
+
+```php
+// Both formats work automatically:
+$client->generations()->create('fal-ai/ideogram/character', [
+    'prompt' => 'character portrait',
+    'reference_image_urls' => 'image.jpg'  // String - auto-converted
+]);
+
+$client->generations()->create('fal-ai/ideogram/character', [
+    'prompt' => 'character portrait',
+    'reference_image_urls' => ['image1.jpg', 'image2.jpg']  // Array - preserved
+]);
+```
 
 ## Key Files to Understand
 
