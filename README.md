@@ -1,16 +1,10 @@
-# FAL AI PHP Client
+# fal.ai PHP Client
 
-A lightweight PHP client for [FAL.AI](https://fal.ai) built with Saloon v3. Create AI-powered content with ease.
+Professional PHP client for the [fal.ai](https://fal.ai) serverless AI platform, built on [Saloon v4](https://docs.saloon.dev).
 
-[![Join FAL.AI Discord](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTcwIiBoZWlnaHQ9IjE3MSIgdmlld0JveD0iMCAwIDE3MCAxNzEiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMDkuNTcxIDAuNjkwMDQyQzExMi41MTUgMC42OTAwNDIgMTE0Ljg3NCAzLjA4MzQ4IDExNS4xNTUgNi4wMTM1MkMxMTcuNjY1IDMyLjE0OSAxMzguNDY2IDUyLjk0OCAxNjQuNjAzIDU1LjQ1OEMxNjcuNTM0IDU1LjczOTQgMTY5LjkyNyA1OC4wOTg1IDE2OS45MjcgNjEuMDQyVjExMC4yNTVDMTY5LjkyNyAxMTMuMTk4IDE2Ny41MzQgMTE1LjU1NyAxNjQuNjAzIDExNS44MzlDMTM4LjQ2NiAxMTguMzQ5IDExNy42NjUgMTM5LjE0OCAxMTUuMTU1IDE2NS4yODNDMTE0Ljg3NCAxNjguMjEzIDExMi41MTUgMTcwLjYwNyAxMDkuNTcxIDE3MC42MDdINTAuMzU1M0M1Ny40MTE2IDE3MC42MDcgNTUuMDUyNCAxNjguMjEzIDU0Ljc3MDkgMTY1LjI4M0M1Mi4yNjA4IDEzOS4xNDggMzEuNDYwMSAxMTguMzQ5IDUuMzIyODkgMTE1LjgzOUMyLjM5MjY2IDExNS41NTctMC4wMDA5NzY1NjIgMTEzLjE5OCAtMC4wMDA5NzY1NjIgMTEwLjI1NVY2MS4wNDJDLTAuMDAwOTc2NTYyIDU4LjA5ODUgMi4zOTI2NyA1NS43Mzk0IDUuMzIyOSA1NS40NThDMzEuNDYwMSA1Mi45NDggNTIuMjYwOCAzMi4xNDkgNTQuNzcwOSA2LjAxMzUxQzU1LjA1MjQgMy4wODM0OCA1Ny40MTE2IDAuNjkwMDQyIDYwLjM1NTMgMC42OTAwNDJIMTA5LjU3MVpNMzQuMTE4MiA4NS41MDQ1QzM0LjExODIgMTEzLjc3NiA1Ny4wMTI0IDEzNi42OTQgODUuMjUzOSAxMzYuNjk0QzExMy40OTUgMTM2LjY5NCAxMzYuMzkgMTEzLjc3NiAxMzYuMzkgODUuNTA0NUMxMzYuMzkgNTcuMjMzMiAxMTMuNDk1IDM0LjMxNDcgODUuMjUzOSAzNC4zMTQ3QzU3LjAxMjQgMzQuMzE0NyAzNC4xMTgyIDU3LjIzMzIgMzQuMTE4MiA4NS41MDQ1WiIgZmlsbD0iYmxhY2siLz48L3N2Zz4=)](https://discord.gg/fal-ai)
+## Requirements
 
-## Features
-
-* 🎨 Support for all FAL AI models (Recraft, Flux Pro, etc.)
-* 🔄 Full queue system with status tracking
-* 📡 Webhook support
-* 🛠️ ComfyUI & Workflows support
-* ⚡ Simple, intuitive API
+- PHP 8.2+
 
 ## Installation
 
@@ -23,86 +17,113 @@ composer require marceloeatworld/falai-php
 ```php
 use MarceloEatWorld\FalAI\FalAI;
 
-$falAI = new FalAI('your-api-key');
+$fal = new FalAI('your-api-key');
 
-// Generate an image
-$result = $falAI->generations()->create('fal-ai/recraft-v3', [
-    'prompt' => 'A beautiful landscape',
-    'negative_prompt' => 'low quality',
-    'image_size' => 'square_hd'
-    'seed' => '42'
+// Synchronous execution
+$result = $fal->run('fal-ai/flux/schnell', [
+    'prompt' => 'a sunset over mountains',
+    'image_size' => 'landscape_16_9',
 ]);
 
-// Check generation status using requestId
-$status = $falAI->generations()->checkStatus($result->requestId);
-
-// Get final result when completed
-$finalResult = $falAI->generations()->getResult($result->requestId);
+$images = $result->json('images');
 ```
 
-## Models & Workflows
+## Queue (Async Workflow)
+
+For long-running models, use the queue to submit jobs and retrieve results later.
 
 ```php
-// FAL AI Models
-$result = $falAI->generations()->create('fal-ai/flux-pro/v1.1-ultra', [
-    'prompt' => 'A futuristic city',
-    'negative_prompt' => 'low quality',
-    'image_size' => 'square_hd'
-    'seed' => '42'
+// Submit a job
+$job = $fal->queue->submit('fal-ai/flux/schnell', [
+    'prompt' => 'a sunset over mountains',
 ]);
 
-// ComfyUI Workflows
-$result = $falAI->generations()->create('comfy/youraccount/workflow', [
-    'loadimage_1' => 'https://example.com/image.jpg',
-    'prompt' => 'Make it anime style'
-    'seed' => '42'
+echo $job->requestId;
+
+// Check status
+$status = $fal->queue->status('fal-ai/flux/schnell', $job->requestId);
+
+echo $status->status->value;       // IN_QUEUE, IN_PROGRESS, COMPLETED
+echo $status->queuePosition;       // position in queue (if queued)
+
+// Get result when completed
+$result = $fal->queue->result('fal-ai/flux/schnell', $job->requestId);
+$images = $result->json('images');
+
+// Cancel a job
+$fal->queue->cancel('fal-ai/flux/schnell', $job->requestId);
+```
+
+## Subscribe (Submit + Auto-Poll)
+
+Submit a job and automatically poll until it completes.
+
+```php
+use MarceloEatWorld\FalAI\Data\QueueStatus;
+
+$result = $fal->queue->subscribe('fal-ai/flux/schnell', [
+    'prompt' => 'a sunset over mountains',
+], pollInterval: 500, timeout: 300, onStatus: function (QueueStatus $status) {
+    echo "Status: {$status->status->value}\n";
+    foreach ($status->logs as $log) {
+        echo "  {$log['message']}\n";
+    }
+});
+
+$images = $result->json('images');
+```
+
+## Webhooks
+
+Receive results via webhook instead of polling.
+
+```php
+$job = $fal->queue->submit('fal-ai/flux/schnell', [
+    'prompt' => 'a sunset over mountains',
+], webhook: 'https://your.app/webhook');
+```
+
+## File Upload
+
+Upload local files to fal.ai storage for use with image-to-image models.
+
+```php
+$url = $fal->storage->upload('/path/to/image.png');
+
+$result = $fal->run('fal-ai/imageutils/rembg', [
+    'image_url' => $url,
 ]);
-
-// Track any generation with requestId
-$status = $falAI->generations()->checkStatus($result->requestId);
 ```
 
-## Advanced Usage
+## Queue Options
+
+Fine-tune queue behavior with named parameters.
 
 ```php
-// Use webhooks
-$result = $falAI->generations()
-    ->withWebhook('https://your-site.com/webhook')
-    ->create('fal-ai/recraft-v3', [
-        'prompt' => 'A serene lake'
-        'seed' => '42'
-    ]);
+use MarceloEatWorld\FalAI\Enums\Priority;
 
-// Cancel a generation using requestId
-$cancelled = $falAI->generations()->cancel($result->requestId);
+$job = $fal->queue->submit('fal-ai/flux/schnell', [
+    'prompt' => 'test',
+],
+    webhook: 'https://your.app/webhook',
+    timeout: 300,
+    priority: Priority::Normal,
+    runnerHint: 'session-abc',
+    noRetry: true,
+);
 ```
 
-## Response Structure
+## Custom Base URLs
 
-The `GenerationData` object contains:
-- `requestId`: Unique identifier for tracking the generation
-- `responseUrl`: URL to fetch the result
-- `statusUrl`: URL to check status
-- `cancelUrl`: URL to cancel generation
-- `status`: Current status (IN_QUEUE, IN_PROGRESS, COMPLETED, ERROR)
-- `payload`: Generation result data when completed
-- `error`: Error message if any
-
-## Tracking Generations
+Override default endpoints if needed.
 
 ```php
-// Store the requestId after creation
-$requestId = $result->requestId;
-
-// Later, check status
-$status = $falAI->generations()->checkStatus($requestId);
-
-if ($status->status === 'COMPLETED') {
-    // Get the final result
-    $finalResult = $falAI->generations()->getResult($requestId);
-    // Access the generated images
-    $images = $finalResult->payload['images'] ?? [];
-}
+$fal = new FalAI(
+    apiKey: 'your-api-key',
+    queueBaseUrl: 'https://queue.fal.run',
+    syncBaseUrl: 'https://fal.run',
+    storageBaseUrl: 'https://rest.alpha.fal.ai',
+);
 ```
 
 ## Laravel Integration
@@ -111,52 +132,88 @@ Add to `config/services.php`:
 
 ```php
 'falai' => [
-    'api_key' => env('FAL_API_KEY'),
+    'api_key' => env('FAL_KEY'),
 ],
 ```
 
 Register in a service provider:
 
 ```php
-public function register()
-{
-    $this->app->singleton(FalAI::class, function () {
-        return new FalAI(config('services.falai.api_key'));
-    });
-}
+$this->app->singleton(\MarceloEatWorld\FalAI\FalAI::class, function () {
+    return new \MarceloEatWorld\FalAI\FalAI(config('services.falai.api_key'));
+});
 ```
 
-Use in controllers:
+Use via injection:
 
 ```php
 use MarceloEatWorld\FalAI\FalAI;
 
-public function generate(FalAI $falAI)
+public function generate(FalAI $fal)
 {
-    $result = $falAI->generations()->create('fal-ai/recraft-v3', [
-        'prompt' => 'A mountain landscape'
-        'seed' => '42'
+    $result = $fal->queue->subscribe('fal-ai/flux/schnell', [
+        'prompt' => 'A mountain landscape',
     ]);
-    
-    // Store requestId for later use
-    $requestId = $result->requestId;
-}
 
-public function checkStatus(FalAI $falAI, string $requestId)
-{
-    return $falAI->generations()->checkStatus($requestId);
+    return $result->json('images');
 }
 ```
 
-## Support & Security
+## Error Handling
 
-For security issues, please email diagngo@gmail.com.
+The client throws Saloon exceptions on HTTP errors (4xx/5xx). Queue subscribe also throws on job failures and timeouts.
+
+```php
+use Saloon\Exceptions\Request\RequestException;
+
+try {
+    $result = $fal->run('fal-ai/flux/schnell', ['prompt' => 'test']);
+} catch (RequestException $e) {
+    echo $e->getResponse()->status();
+    echo $e->getResponse()->body();
+}
+
+try {
+    $result = $fal->queue->subscribe('fal-ai/flux/schnell', ['prompt' => 'test']);
+} catch (\RuntimeException $e) {
+    echo $e->getMessage(); // timeout or job failure
+}
+```
+
+## Architecture
+
+```
+src/
+  FalAI.php                              # Entry point
+  Auth/FalKeyAuthenticator.php           # Authorization: Key {token}
+  Connectors/
+    FalConnector.php                     # Abstract base (auth, headers, timeouts)
+    QueueConnector.php                   # queue.fal.run
+    SyncConnector.php                    # fal.run
+    StorageConnector.php                 # rest.alpha.fal.ai
+  Resources/
+    QueueResource.php                    # submit, status, result, cancel, subscribe
+    StorageResource.php                  # upload
+  Requests/
+    Queue/SubmitRequest.php
+    Queue/StatusRequest.php
+    Queue/ResultRequest.php
+    Queue/CancelRequest.php
+    Sync/RunRequest.php
+    Storage/InitiateUploadRequest.php
+  Data/
+    QueuedJob.php                        # Submit response DTO
+    QueueStatus.php                      # Status check DTO
+  Enums/
+    Status.php                           # IN_QUEUE, IN_PROGRESS, COMPLETED
+    Priority.php                         # normal, low
+```
 
 ## License
 
-MIT License - see LICENSE.
+MIT
 
 ## Credits
 
-- Built with [Saloon v3](https://github.com/saloonphp/saloon)
-- Inspired by [replicate-php](https://github.com/replicate-php)
+- Built with [Saloon v4](https://github.com/saloonphp/saloon)
+- [fal.ai API Documentation](https://docs.fal.ai)

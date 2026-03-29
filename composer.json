@@ -1,7 +1,7 @@
 {
     "name": "marceloeatworld/falai-php",
-    "description": "A PHP client for the Fal AI API",
-    "keywords": ["fal-ai", "php", "package"],
+    "description": "Professional PHP client for the fal.ai serverless AI platform",
+    "keywords": ["fal-ai", "fal", "ai", "php", "image-generation", "serverless", "saloon"],
     "license": "MIT",
     "authors": [
         {
@@ -10,8 +10,9 @@
         }
     ],
     "require": {
-        "php": "^8.1.0",
-        "saloonphp/saloon": "^3.0"
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.6",
+        "saloonphp/saloon": "^4.0"
     },
     "autoload": {
         "psr-4": {
@@ -26,6 +27,9 @@
     "require-dev": {
         "phpunit/phpunit": "^11.0"
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true
+    }
 }
