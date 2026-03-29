@@ -63,7 +63,7 @@ use MarceloEatWorld\FalAI\Data\QueueStatus;
 
 $result = $fal->queue->subscribe('fal-ai/flux/schnell', [
     'prompt' => 'a sunset over mountains',
-], pollInterval: 500, timeout: 300, onStatus: function (QueueStatus $status) {
+], pollInterval: 500, timeout: 300, requestTimeout: 120, onStatus: function (QueueStatus $status) {
     echo "Status: {$status->status->value}\n";
     foreach ($status->logs as $log) {
         echo "  {$log['message']}\n";
@@ -88,7 +88,7 @@ $job = $fal->queue->submit('fal-ai/flux/schnell', [
 Upload local files to fal.ai storage for use with image-to-image models.
 
 ```php
-$url = $fal->storage->upload('/path/to/image.png');
+$url = $fal->storage->upload('/path/to/image.png', 'image/png');
 
 $result = $fal->run('fal-ai/imageutils/rembg', [
     'image_url' => $url,
@@ -205,8 +205,8 @@ src/
     QueuedJob.php                        # Submit response DTO
     QueueStatus.php                      # Status check DTO
   Enums/
-    Status.php                           # IN_QUEUE, IN_PROGRESS, COMPLETED
-    Priority.php                         # normal, low
+    Status.php                           # InQueue, InProgress, Completed
+    Priority.php                         # Normal, Low
 ```
 
 ## License
