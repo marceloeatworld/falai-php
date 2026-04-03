@@ -1,6 +1,6 @@
 {
     "name": "marceloeatworld/falai-php",
-    "description": "Professional PHP client for the fal.ai serverless AI platform",
+    "description": "PHP client for the fal.ai serverless AI platform, compatible with Laravel and native PHP",
     "keywords": ["fal-ai", "fal", "ai", "php", "image-generation", "serverless", "saloon"],
     "license": "MIT",
     "authors": [
