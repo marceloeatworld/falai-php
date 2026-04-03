@@ -1,6 +1,6 @@
 # fal.ai PHP Client
 
-PHP client for the [fal.ai](https://fal.ai) serverless AI platform, compatible with Laravel and native PHP, built on [Saloon v4](https://docs.saloon.dev).
+#1 PHP client for the [fal.ai](https://fal.ai) serverless AI platform, compatible with Laravel and native PHP, built on [Saloon v4](https://docs.saloon.dev).
 
 ## Requirements
 
