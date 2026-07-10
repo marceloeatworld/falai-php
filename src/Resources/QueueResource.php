@@ -7,6 +7,8 @@ namespace MarceloEatWorld\FalAI\Resources;
 use MarceloEatWorld\FalAI\Data\QueuedJob;
 use MarceloEatWorld\FalAI\Data\QueueStatus;
 use MarceloEatWorld\FalAI\Enums\Priority;
+use MarceloEatWorld\FalAI\Exceptions\QueueFailedException;
+use MarceloEatWorld\FalAI\Exceptions\QueueTimeoutException;
 use MarceloEatWorld\FalAI\Requests\Queue\CancelRequest;
 use MarceloEatWorld\FalAI\Requests\Queue\ResultRequest;
 use MarceloEatWorld\FalAI\Requests\Queue\StatusRequest;
@@ -69,7 +71,8 @@ final class QueueResource extends BaseResource
      * Submit a request and poll until completion.
      *
      * @param callable(QueueStatus): void|null $onStatus
-     * @throws \RuntimeException When the request times out or the job fails
+     * @throws QueueTimeoutException When polling exceeds $timeout seconds
+     * @throws QueueFailedException When the job completes with an error
      */
     public function subscribe(
         string $model,
@@ -80,6 +83,8 @@ final class QueueResource extends BaseResource
         ?callable $onStatus = null,
         ?int $requestTimeout = null,
         ?Priority $priority = null,
+        ?string $runnerHint = null,
+        bool $noRetry = false,
     ): Response {
         $job = $this->submit(
             model: $model,
@@ -87,6 +92,8 @@ final class QueueResource extends BaseResource
             webhook: $webhook,
             timeout: $requestTimeout,
             priority: $priority,
+            runnerHint: $runnerHint,
+            noRetry: $noRetry,
         );
 
         $start = microtime(true);
@@ -95,8 +102,9 @@ final class QueueResource extends BaseResource
             usleep($pollInterval * 1000);
 
             if (microtime(true) - $start > $timeout) {
-                throw new \RuntimeException(
-                    "Queue subscribe timed out after {$timeout}s for request {$job->requestId}"
+                throw new QueueTimeoutException(
+                    "Queue subscribe timed out after {$timeout}s for request {$job->requestId}",
+                    requestId: $job->requestId,
                 );
             }
 
@@ -108,8 +116,9 @@ final class QueueResource extends BaseResource
 
             if ($status->isCompleted()) {
                 if ($status->hasFailed()) {
-                    throw new \RuntimeException(
-                        "Request {$job->requestId} failed: {$status->error}"
+                    throw new QueueFailedException(
+                        "Request {$job->requestId} failed: {$status->error}",
+                        requestId: $job->requestId,
                     );
                 }
 

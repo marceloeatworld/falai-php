@@ -10,6 +10,8 @@ use Saloon\Http\BaseResource;
 
 final class StorageResource extends BaseResource
 {
+    private ?Client $httpClient = null;
+
     /**
      * Upload a local file to fal.ai storage and return its CDN URL.
      */
@@ -20,14 +22,30 @@ final class StorageResource extends BaseResource
         }
 
         $contentType ??= mime_content_type($filePath) ?: 'application/octet-stream';
-        $fileName = basename($filePath);
 
+        return $this->performUpload(basename($filePath), $contentType, fopen($filePath, 'r'));
+    }
+
+    /**
+     * Upload in-memory content (e.g. decoded or generated data) to fal.ai
+     * storage and return its CDN URL.
+     */
+    public function uploadData(string $data, string $fileName, string $contentType): string
+    {
+        return $this->performUpload($fileName, $contentType, $data);
+    }
+
+    /**
+     * @param resource|string $body
+     */
+    private function performUpload(string $fileName, string $contentType, mixed $body): string
+    {
         $response = $this->connector->send(new InitiateUploadRequest($fileName, $contentType));
         $data = $response->json();
 
-        $client = new Client();
-        $client->put($data['upload_url'], [
-            'body' => fopen($filePath, 'r'),
+        $this->httpClient ??= new Client();
+        $this->httpClient->put($data['upload_url'], [
+            'body' => $body,
             'headers' => ['Content-Type' => $contentType],
         ]);
 
