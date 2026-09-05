@@ -12,8 +12,11 @@ use SodiumException;
  * Verifies the ED25519 signature that fal.ai attaches to every webhook
  * request via the X-Fal-Webhook-* headers.
  *
- * Public keys are fetched from the fal.ai JWKS endpoint once per instance,
- * so reuse the same instance (e.g. as a singleton) across requests.
+ * Public keys are fetched from the fal.ai JWKS endpoint and cached per
+ * instance for 24 hours (the maximum recommended by fal.ai), so reuse the
+ * same instance (e.g. as a singleton) across requests. When a signature
+ * matches none of the cached keys, the JWKS is fetched again once to pick
+ * up rotated keys before the webhook is rejected.
  */
 final class WebhookVerifier
 {
@@ -21,13 +24,22 @@ final class WebhookVerifier
 
     private const TIMESTAMP_TOLERANCE = 300;
 
+    private const JWKS_CACHE_TTL = 86400;
+
+    // Minimum age of the cache before a mismatching signature triggers a
+    // refetch, so a burst of forged webhooks cannot hammer the JWKS endpoint.
+    private const JWKS_REFRESH_INTERVAL = 60;
+
     /** @var list<string>|null */
     private ?array $publicKeys = null;
+
+    private int $publicKeysFetchedAt = 0;
 
     public function __construct(
         private readonly Client $client = new Client(['timeout' => 10]),
         private readonly string $jwksUrl = self::JWKS_URL,
         private readonly int $timestampTolerance = self::TIMESTAMP_TOLERANCE,
+        private readonly int $jwksCacheTtl = self::JWKS_CACHE_TTL,
     ) {}
 
     /**
@@ -97,21 +109,43 @@ final class WebhookVerifier
 
         $message = implode("\n", [$requestId, $userId, $timestamp, hash('sha256', $body)]);
 
-        foreach ($this->publicKeys() as $publicKey) {
-            if (sodium_crypto_sign_verify_detached($signatureBytes, $message, $publicKey)) {
-                return;
-            }
+        if ($this->matchesAnyKey($signatureBytes, $message, $this->publicKeys())) {
+            return;
+        }
+
+        // The keys may have been rotated since they were cached.
+        if (time() - $this->publicKeysFetchedAt >= self::JWKS_REFRESH_INTERVAL
+            && $this->matchesAnyKey($signatureBytes, $message, $this->publicKeys(refresh: true))
+        ) {
+            return;
         }
 
         throw new WebhookVerificationException('Webhook signature does not match any fal.ai public key');
     }
 
     /**
+     * @param list<string> $publicKeys
+     */
+    private function matchesAnyKey(string $signature, string $message, array $publicKeys): bool
+    {
+        foreach ($publicKeys as $publicKey) {
+            if (sodium_crypto_sign_verify_detached($signature, $message, $publicKey)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @return list<string>
      */
-    private function publicKeys(): array
+    private function publicKeys(bool $refresh = false): array
     {
-        if ($this->publicKeys !== null) {
+        if (! $refresh
+            && $this->publicKeys !== null
+            && $this->publicKeysFetchedAt > time() - $this->jwksCacheTtl
+        ) {
             return $this->publicKeys;
         }
 
@@ -146,6 +180,8 @@ final class WebhookVerifier
         if ($keys === []) {
             throw new WebhookVerificationException('No ED25519 public key found in the fal.ai JWKS');
         }
+
+        $this->publicKeysFetchedAt = time();
 
         return $this->publicKeys = $keys;
     }

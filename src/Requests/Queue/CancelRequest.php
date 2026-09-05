@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MarceloEatWorld\FalAI\Requests\Queue;
 
+use MarceloEatWorld\FalAI\Support\EndpointId;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 
@@ -18,6 +19,6 @@ final class CancelRequest extends Request
 
     public function resolveEndpoint(): string
     {
-        return '/' . $this->model . '/requests/' . $this->requestId . '/cancel';
+        return '/' . EndpointId::appId($this->model) . '/requests/' . $this->requestId . '/cancel';
     }
 }

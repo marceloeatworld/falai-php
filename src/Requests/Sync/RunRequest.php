@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MarceloEatWorld\FalAI\Requests\Sync;
 
+use MarceloEatWorld\FalAI\Data\ObjectLifecycle;
+use MarceloEatWorld\FalAI\Support\FalHeaders;
 use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
@@ -20,6 +22,8 @@ final class RunRequest extends Request implements HasBody
         private readonly array $input,
         private readonly ?int $timeout = null,
         private readonly bool $noRetry = false,
+        private readonly ?ObjectLifecycle $lifecycle = null,
+        private readonly ?bool $storeIo = null,
     ) {}
 
     public function resolveEndpoint(): string
@@ -29,17 +33,12 @@ final class RunRequest extends Request implements HasBody
 
     protected function defaultHeaders(): array
     {
-        $headers = [];
-
-        if ($this->timeout !== null) {
-            $headers['X-Fal-Request-Timeout'] = (string) $this->timeout;
-        }
-
-        if ($this->noRetry) {
-            $headers['X-Fal-No-Retry'] = '1';
-        }
-
-        return $headers;
+        return FalHeaders::build(
+            timeout: $this->timeout,
+            noRetry: $this->noRetry,
+            lifecycle: $this->lifecycle,
+            storeIo: $this->storeIo,
+        );
     }
 
     protected function defaultBody(): array

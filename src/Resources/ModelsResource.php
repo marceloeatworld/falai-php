@@ -12,6 +12,7 @@ use MarceloEatWorld\FalAI\Enums\ModelStatus;
 use MarceloEatWorld\FalAI\Requests\Models\EstimateCostRequest;
 use MarceloEatWorld\FalAI\Requests\Models\ListModelsRequest;
 use MarceloEatWorld\FalAI\Requests\Models\PricingRequest;
+use Saloon\Exceptions\Request\RequestException;
 use Saloon\Http\BaseResource;
 
 final class ModelsResource extends BaseResource
@@ -52,10 +53,20 @@ final class ModelsResource extends BaseResource
      */
     public function get(string $endpointId, array $expand = []): ?Model
     {
-        $page = $this->list(endpointIds: [$endpointId], expand: $expand);
+        try {
+            $page = $this->list(endpointIds: [$endpointId], expand: $expand);
+        } catch (RequestException $exception) {
+            // The API answers 404 for unknown endpoint ids.
+            if ($exception->getResponse()->status() === 404) {
+                return null;
+            }
+
+            throw $exception;
+        }
+
         $model = $page->models[0] ?? null;
 
-        // Unknown ids are echoed back without metadata.
+        // Older API versions echoed unknown ids back without metadata.
         if ($model === null || $model->metadata === []) {
             return null;
         }

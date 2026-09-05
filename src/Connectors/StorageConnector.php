@@ -8,7 +8,7 @@ final class StorageConnector extends FalConnector
 {
     public function __construct(
         string $apiKey,
-        private readonly string $baseUrl = 'https://rest.alpha.fal.ai',
+        private readonly string $baseUrl = 'https://rest.fal.ai',
     ) {
         parent::__construct($apiKey);
     }

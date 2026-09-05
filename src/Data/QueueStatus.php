@@ -22,8 +22,11 @@ final readonly class QueueStatus
 
     public static function fromResponse(Response $response): self
     {
-        $data = $response->json();
+        return self::fromArray($response->json());
+    }
 
+    public static function fromArray(array $data): self
+    {
         return new self(
             status: Status::from($data['status']),
             requestId: $data['request_id'],

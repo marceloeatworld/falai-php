@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MarceloEatWorld\FalAI\Requests\Queue;
 
+use MarceloEatWorld\FalAI\Data\ObjectLifecycle;
 use MarceloEatWorld\FalAI\Enums\Priority;
+use MarceloEatWorld\FalAI\Support\FalHeaders;
 use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
@@ -24,6 +26,9 @@ final class SubmitRequest extends Request implements HasBody
         private readonly ?Priority $priority = null,
         private readonly ?string $runnerHint = null,
         private readonly bool $noRetry = false,
+        private readonly ?ObjectLifecycle $lifecycle = null,
+        private readonly ?bool $storeIo = null,
+        private readonly ?int $maxQueueLength = null,
     ) {}
 
     public function resolveEndpoint(): string
@@ -33,25 +38,14 @@ final class SubmitRequest extends Request implements HasBody
 
     protected function defaultHeaders(): array
     {
-        $headers = [];
-
-        if ($this->timeout !== null) {
-            $headers['X-Fal-Request-Timeout'] = (string) $this->timeout;
-        }
-
-        if ($this->priority !== null) {
-            $headers['X-Fal-Queue-Priority'] = $this->priority->value;
-        }
-
-        if ($this->runnerHint !== null) {
-            $headers['X-Fal-Runner-Hint'] = $this->runnerHint;
-        }
-
-        if ($this->noRetry) {
-            $headers['X-Fal-No-Retry'] = '1';
-        }
-
-        return $headers;
+        return FalHeaders::build(
+            timeout: $this->timeout,
+            noRetry: $this->noRetry,
+            lifecycle: $this->lifecycle,
+            storeIo: $this->storeIo,
+            priority: $this->priority,
+            runnerHint: $this->runnerHint,
+        );
     }
 
     protected function defaultBody(): array
@@ -65,6 +59,10 @@ final class SubmitRequest extends Request implements HasBody
 
         if ($this->webhook !== null) {
             $query['fal_webhook'] = $this->webhook;
+        }
+
+        if ($this->maxQueueLength !== null) {
+            $query['fal_max_queue_length'] = $this->maxQueueLength;
         }
 
         return $query;
