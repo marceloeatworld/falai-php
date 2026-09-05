@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 2.2.0 - 2026-09-05
 
-Audited against the official fal.ai documentation and the fal-js / fal-client-python sources on 2026-09-05. Every change below was verified against the live API. No public signature was removed or changed; new parameters are optional and appended last.
+Audited against the official fal.ai documentation and the fal-js / fal-client-python sources. Every change below was verified against the live API. No public signature was removed or changed; new parameters are optional and appended last.
 
 ### Fixed
 
