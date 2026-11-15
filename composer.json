@@ -11,7 +11,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "guzzlehttp/guzzle": "^7.6",
+        "guzzlehttp/guzzle": "^7.6 || ^8.0",
         "saloonphp/saloon": "^4.0"
     },
     "autoload": {
