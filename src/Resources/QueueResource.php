@@ -25,25 +25,27 @@ final class QueueResource extends BaseResource
      * Submit a request to the queue.
      *
      * @param string|null $webhook URL that receives the result (fal_webhook)
-     * @param int|null $timeout Server-side deadline in seconds before processing starts (X-Fal-Request-Timeout)
+     * @param int|float|null $timeout Seconds the request has to start on a runner, else 504 (X-Fal-Request-Start-Timeout)
      * @param Priority|null $priority Queue priority (X-Fal-Queue-Priority)
      * @param string|null $runnerHint Routing hint for runner affinity (X-Fal-Runner-Hint)
      * @param bool $noRetry Disable automatic retries (X-Fal-No-Retry)
      * @param ObjectLifecycle|null $lifecycle Expiration and access control of generated files (X-Fal-Object-Lifecycle-Preference)
      * @param bool|null $storeIo false stops fal.ai from storing the request payloads (X-Fal-Store-IO)
      * @param int|null $maxQueueLength Reject with 429 when more requests are already waiting (fal_max_queue_length)
+     * @param array<string, string> $headers Extra platform headers (X-Fal-Tags, X-Fal-Retry-Config, ...); the named options win
      */
     public function submit(
         string $model,
         array $input,
         ?string $webhook = null,
-        ?int $timeout = null,
+        int|float|null $timeout = null,
         ?Priority $priority = null,
         ?string $runnerHint = null,
         bool $noRetry = false,
         ?ObjectLifecycle $lifecycle = null,
         ?bool $storeIo = null,
         ?int $maxQueueLength = null,
+        array $headers = [],
     ): QueuedJob {
         $response = $this->connector->send(new SubmitRequest(
             model: $model,
@@ -56,6 +58,7 @@ final class QueueResource extends BaseResource
             lifecycle: $lifecycle,
             storeIo: $storeIo,
             maxQueueLength: $maxQueueLength,
+            extraHeaders: $headers,
         ));
 
         return QueuedJob::fromResponse($response);
@@ -119,7 +122,8 @@ final class QueueResource extends BaseResource
      * @param int $pollInterval Milliseconds between status checks
      * @param int $timeout Client-side limit in seconds for the whole wait
      * @param callable(QueueStatus): void|null $onStatus Called after every status check
-     * @param int|null $requestTimeout Server-side deadline in seconds (X-Fal-Request-Timeout)
+     * @param int|float|null $requestTimeout Seconds the request has to start on a runner (X-Fal-Request-Start-Timeout)
+     * @param array<string, string> $headers Extra platform headers; the named options win
      * @throws QueueTimeoutException When polling exceeds $timeout seconds
      * @throws QueueFailedException When the job completes with an error
      */
@@ -130,13 +134,14 @@ final class QueueResource extends BaseResource
         int $pollInterval = 500,
         int $timeout = 300,
         ?callable $onStatus = null,
-        ?int $requestTimeout = null,
+        int|float|null $requestTimeout = null,
         ?Priority $priority = null,
         ?string $runnerHint = null,
         bool $noRetry = false,
         ?ObjectLifecycle $lifecycle = null,
         ?bool $storeIo = null,
         ?int $maxQueueLength = null,
+        array $headers = [],
     ): Response {
         $job = $this->submit(
             model: $model,
@@ -149,6 +154,7 @@ final class QueueResource extends BaseResource
             lifecycle: $lifecycle,
             storeIo: $storeIo,
             maxQueueLength: $maxQueueLength,
+            headers: $headers,
         );
 
         $start = microtime(true);

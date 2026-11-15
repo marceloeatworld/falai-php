@@ -22,13 +22,14 @@ final class SubmitRequest extends Request implements HasBody
         private readonly string $model,
         private readonly array $input,
         private readonly ?string $webhook = null,
-        private readonly ?int $timeout = null,
+        private readonly int|float|null $timeout = null,
         private readonly ?Priority $priority = null,
         private readonly ?string $runnerHint = null,
         private readonly bool $noRetry = false,
         private readonly ?ObjectLifecycle $lifecycle = null,
         private readonly ?bool $storeIo = null,
         private readonly ?int $maxQueueLength = null,
+        private readonly array $extraHeaders = [],
     ) {}
 
     public function resolveEndpoint(): string
@@ -45,6 +46,7 @@ final class SubmitRequest extends Request implements HasBody
             storeIo: $this->storeIo,
             priority: $this->priority,
             runnerHint: $this->runnerHint,
+            headers: $this->extraHeaders,
         );
     }
 

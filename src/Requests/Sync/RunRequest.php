@@ -20,10 +20,11 @@ final class RunRequest extends Request implements HasBody
     public function __construct(
         private readonly string $model,
         private readonly array $input,
-        private readonly ?int $timeout = null,
+        private readonly int|float|null $timeout = null,
         private readonly bool $noRetry = false,
         private readonly ?ObjectLifecycle $lifecycle = null,
         private readonly ?bool $storeIo = null,
+        private readonly array $extraHeaders = [],
     ) {}
 
     public function resolveEndpoint(): string
@@ -38,6 +39,7 @@ final class RunRequest extends Request implements HasBody
             noRetry: $this->noRetry,
             lifecycle: $this->lifecycle,
             storeIo: $this->storeIo,
+            headers: $this->extraHeaders,
         );
     }
 

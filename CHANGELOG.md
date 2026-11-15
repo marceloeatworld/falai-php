@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.3.0 - 2026-11-15
+
+Audited against the fal.ai documentation and OpenAPI specifications of 2026-11-15. The code changes below were verified against the live API, on Guzzle 7 and Guzzle 8. No public signature was removed; new parameters are optional and appended last.
+
+### Changed
+
+- The start timeout (`timeout` on `run()`, `stream()` and `queue->submit()`, `requestTimeout` on `queue->subscribe()`) is now sent as `X-Fal-Request-Start-Timeout`. fal.ai deprecated `X-Fal-Request-Timeout`. The parameter also accepts floats (`2.5`); the API requires a value greater than 0.1.
+- `guzzlehttp/guzzle` constraint widened to `^7.6 || ^8.0` (Guzzle 8 needs Saloon 4.5 or later).
+
+### Added
+
+- `headers` option on `run()`, `stream()`, `queue->submit()` and `queue->subscribe()`: pass any platform header (`X-Fal-Tags`, `X-Fal-Retry-Config`, `x-app-fal-disable-fallback`, `X-Fal-Workflow-Envelope`, ...). The named options win when both set the same header.
+- `sort` option on `models->list()` with the `ModelSort` enum (`Relevant`, `Recent`).
+
+### Documentation
+
+- Fallback chains through `run('execute', ...)`, backup hosts (`queue.falrun.com`, `falrun.com`), result retention, the 200 `OK` cancel response for queued requests, the full list of request error types, the webhook retry policy (3xx answers are not retried) and webhook IP ranges, payload storage period (90 days).
+
 ## 2.2.0 - 2026-09-05
 
 Audited against the official fal.ai documentation and the fal-js / fal-client-python sources. Every change below was verified against the live API. No public signature was removed or changed; new parameters are optional and appended last.

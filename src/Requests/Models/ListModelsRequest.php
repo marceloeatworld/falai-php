@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MarceloEatWorld\FalAI\Requests\Models;
 
+use MarceloEatWorld\FalAI\Enums\ModelSort;
 use MarceloEatWorld\FalAI\Enums\ModelStatus;
 use MarceloEatWorld\FalAI\Support\QueryString;
 use Psr\Http\Message\RequestInterface;
@@ -28,6 +29,7 @@ final class ListModelsRequest extends Request
         private readonly ?string $cursor = null,
         private readonly array $endpointIds = [],
         private readonly array $expand = [],
+        private readonly ?ModelSort $sort = null,
     ) {}
 
     public function resolveEndpoint(): string
@@ -44,6 +46,7 @@ final class ListModelsRequest extends Request
             'q' => $this->search,
             'category' => $this->category,
             'status' => $this->status?->value,
+            'sort' => $this->sort?->value,
             'limit' => $this->limit,
             'cursor' => $this->cursor,
             'endpoint_id' => $this->endpointIds,

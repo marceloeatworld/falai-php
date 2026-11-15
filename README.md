@@ -72,9 +72,14 @@ echo $status->queuePosition;       // position in queue (if queued)
 $result = $fal->queue->result('fal-ai/flux/schnell', $job->requestId);
 $images = $result->json('images');
 
-// Cancel a job (202 CANCELLATION_REQUESTED; throws on 400 ALREADY_COMPLETED or 404 NOT_FOUND)
+// Cancel a job: 200 OK when it was still queued, 202 CANCELLATION_REQUESTED when it is running;
+// throws on 400 ALREADY_COMPLETED or 404 NOT_FOUND
 $fal->queue->cancel('fal-ai/flux/schnell', $job->requestId);
 ```
+
+A request cancelled while running may still finish: the model decides how to stop, so check the status or fetch the result afterwards.
+
+Results stay available for 1 hour after completion (6 minutes when the result is 10 KB or larger), or for the whole payload storage period when payload storage is on (the default, see `storeIo`). After that `result()` answers 404, so fetch results promptly or use a webhook.
 
 Status, result and cancel are addressed by application id (`fal-ai/flux`), not by the full endpoint id (`fal-ai/flux/schnell`). The client derives it automatically, so pass the same model id you submitted with. The URLs returned by `submit()` (`statusUrl`, `responseUrl`, `cancelUrl`) are also exposed on the `QueuedJob` DTO.
 
@@ -155,7 +160,9 @@ try {
 
 Public keys are fetched from the fal.ai JWKS endpoint (`https://rest.fal.ai/.well-known/jwks.json`) and cached per instance for 24 hours, so reuse the verifier (singleton) across requests. If a signature matches none of the cached keys, the JWKS is fetched again once to pick up rotated keys. `verify()` throws with a reason, `isValid()` returns a boolean. Timestamps more than 5 minutes away from the server clock are rejected.
 
-Webhook payloads carry `status` (`"OK"` or `"ERROR"`), `request_id`, `gateway_request_id` and `payload`. On error an `error` field is added; if the output could not be serialized, `payload` is `null` and `payload_error` explains why. fal.ai retries deliveries that do not answer with a 2xx (redirects count as failures), so keep handlers idempotent.
+Webhook payloads carry `status` (`"OK"` or `"ERROR"`), `request_id`, `gateway_request_id` and `payload`. On error an `error` field is added; if the output could not be serialized, `payload` is `null` and `payload_error` explains why.
+
+Answer with a 2xx; the first delivery times out after 15 seconds, retries after 120. Timeouts, network errors and 4xx/5xx answers are retried with increasing backoff (up to 31 times, until the stored result expires), so keep handlers idempotent. A 3xx answer is a permanent failure and is not retried: give the final URL, not one that redirects. To allowlist the sender, the current IP ranges are listed at `https://api.fal.ai/v1/meta` (`webhook_ip_ranges`).
 
 ## File Upload
 
@@ -210,17 +217,22 @@ Private files answer 403 to anonymous requests. To read them, exchange your API 
 Search the fal.ai model catalog (no API key required for this endpoint, but one is always sent).
 
 ```php
+use MarceloEatWorld\FalAI\Enums\ModelSort;
 use MarceloEatWorld\FalAI\Enums\ModelStatus;
 
 // Search with filters, cursor-based pagination
 $page = $fal->models->list(query: 'flux', category: 'text-to-image', status: ModelStatus::Active, limit: 20);
+
+// Newest models first (default is ModelSort::Relevant: trending, or keyword relevance when searching)
+$page = $fal->models->list(category: 'text-to-video', sort: ModelSort::Recent);
 
 foreach ($page->models as $model) {
     echo "{$model->endpointId}: {$model->displayName} ({$model->category})\n";
 }
 
 if ($page->hasMore) {
-    $next = $fal->models->list(query: 'flux', cursor: $page->nextCursor);
+    // Keep the filters, sort and limit unchanged when following a cursor
+    $next = $fal->models->list(query: 'flux', category: 'text-to-image', status: ModelStatus::Active, limit: 20, cursor: $page->nextCursor);
 }
 
 // Single model (null when unknown)
@@ -272,23 +284,67 @@ $job = $fal->queue->submit('fal-ai/flux/schnell', [
     'prompt' => 'test',
 ],
     webhook: 'https://your.app/webhook',     // ?fal_webhook=
-    timeout: 300,                            // X-Fal-Request-Timeout (seconds before processing must start, else 504)
+    timeout: 300,                            // X-Fal-Request-Start-Timeout: seconds to start on a runner (queue wait and retries included), else 504
     priority: Priority::Low,                 // X-Fal-Queue-Priority: normal (default) or low
     runnerHint: 'session-abc',               // X-Fal-Runner-Hint: route to the same runner (session affinity)
     noRetry: true,                           // X-Fal-No-Retry: disable the automatic retries
     lifecycle: ObjectLifecycle::expiresIn(3600), // X-Fal-Object-Lifecycle-Preference
-    storeIo: false,                          // X-Fal-Store-IO: 0, do not keep request payloads for 30 days
+    storeIo: false,                          // X-Fal-Store-IO: 0, do not keep request payloads (kept 90 days by default)
     maxQueueLength: 100,                     // ?fal_max_queue_length=: reject with 429 if more requests are already waiting
+    headers: ['X-Fal-Tags' => 'team=design,env=prod'], // any other platform header, see below
 );
 ```
 
-`subscribe()` accepts the same options (`timeout` there is the client-side polling limit, use `requestTimeout` for the server-side deadline). `run()` and `stream()` accept `timeout`, `noRetry`, `lifecycle` and `storeIo`.
+`subscribe()` accepts the same options (`timeout` there is the client-side polling limit, use `requestTimeout` for the server-side deadline). `run()` and `stream()` accept `timeout`, `noRetry`, `lifecycle`, `storeIo` and `headers`.
 
-Useful response headers on `run()` and `result()`: `x-fal-request-id`, `x-fal-billable-units`, and `x-fal-error-type` on failures.
+The start timeout accepts fractions of a second (`timeout: 2.5`) and must be greater than 0.1. It only limits the time to start: once a runner picks the request up, the model runs for as long as it needs.
+
+The queue retries temporary runner errors (connection errors, 503, 504) for up to 10 attempts. The synchronous API (`run()`, `stream()`) never retries: on a temporary error the response carries `X-Fal-Needs-Retry: 1`, and a 429 with `type: concurrent_requests_limit` means your account reached its concurrent request limit.
+
+### Other Platform Headers
+
+`headers` passes any header through, so new fal.ai headers work without a client update. The named options win when both set the same header.
+
+```php
+$job = $fal->queue->submit('fal-ai/flux/schnell', ['prompt' => 'test'], headers: [
+    'X-Fal-Tags' => 'team=design,env=prod',        // cost attribution tags (must be enabled on your account)
+    'x-app-fal-disable-fallback' => 'true',        // do not reroute to an alternative endpoint
+    'X-Fal-Workflow-Envelope' => 'true',           // workflows only: add each step's endpoint and request id to the result
+    'X-Fal-Retry-Config' => json_encode([          // your own apps only: retries per condition
+        'timeout' => ['retries' => 0],
+        'server_error' => ['retries' => 3],
+    ]),
+]);
+```
+
+Useful response headers on `run()` and `result()`: `x-fal-request-id`, `x-fal-billable-units`, `x-fal-served-from`, and on failures `x-fal-error-type`, `x-fal-needs-retry` and `x-fal-request-timeout-type` (`user` when the start timeout expired).
+
+## Fallback Chains
+
+Send a primary model and up to two fallback models in one synchronous request to the `execute` endpoint. fal.ai runs the next model when the previous one fails with an error listed in its `fallback_errors` (default: `queue_timeout`, `internal_error`, `rate_limited`). `"$input"` and `"$input.field"` reuse the primary input.
+
+```php
+$result = $fal->run('execute', [
+    'endpoint' => 'fal-ai/flux/schnell',
+    'input' => ['prompt' => 'a sunset over mountains'],
+    'config' => ['start_timeout' => 10],
+    'fallback' => [
+        [
+            'endpoint' => 'fal-ai/flux/dev',
+            'input' => ['prompt' => '$input.prompt', 'num_inference_steps' => 28],
+        ],
+    ],
+]);
+
+$result->json('status');      // "OK" or "ERROR"
+$result->json('endpoint');    // the model that produced the output
+$result->json('output');      // same payload as run() on that model
+$result->json('attempts');    // one entry per model tried: endpoint, outcome, request_id, status, elapsed
+```
 
 ## Custom Base URLs
 
-Override default endpoints if needed.
+Override default endpoints if needed. fal.ai runs backup hosts that accept the same key, paths and payloads: `https://queue.falrun.com` for the queue and `https://falrun.com` for synchronous calls.
 
 ```php
 $fal = new FalAI(
@@ -362,7 +418,7 @@ try {
 }
 ```
 
-Status responses expose `error` and `error_type` (`QueueStatus::$error`, `QueueStatus::$errorType`); request-level error types include `request_timeout`, `startup_timeout`, `client_cancelled`, `runner_server_error` and `internal_error`.
+Status responses expose `error` and `error_type` (`QueueStatus::$error`, `QueueStatus::$errorType`); the same value is in the `detail`/`error_type` body and the `X-Fal-Error-Type` header of failed `run()` and `result()` calls. Request-level error types: `request_timeout`, `startup_timeout`, `runner_scheduling_failure`, `runner_connection_timeout`, `runner_disconnected`, `runner_connection_refused`, `runner_connection_error`, `runner_incomplete_response`, `runner_server_error`, `client_disconnected`, `client_cancelled`, `bad_request` and `internal_error`.
 
 ## Architecture
 
@@ -404,6 +460,7 @@ src/
     Status.php                           # InQueue, InProgress, Completed
     Priority.php                         # Normal, Low
     ModelStatus.php                      # Active, Deprecated
+    ModelSort.php                        # Relevant, Recent
   Webhooks/
     WebhookVerifier.php                  # ED25519 signature verification (JWKS)
   Exceptions/

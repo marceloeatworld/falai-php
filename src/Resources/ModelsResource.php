@@ -8,6 +8,7 @@ use MarceloEatWorld\FalAI\Data\CostEstimate;
 use MarceloEatWorld\FalAI\Data\Model;
 use MarceloEatWorld\FalAI\Data\ModelPrice;
 use MarceloEatWorld\FalAI\Data\ModelsPage;
+use MarceloEatWorld\FalAI\Enums\ModelSort;
 use MarceloEatWorld\FalAI\Enums\ModelStatus;
 use MarceloEatWorld\FalAI\Requests\Models\EstimateCostRequest;
 use MarceloEatWorld\FalAI\Requests\Models\ListModelsRequest;
@@ -23,6 +24,7 @@ final class ModelsResource extends BaseResource
      *
      * @param list<string> $endpointIds Filter to specific models (max 50)
      * @param list<string> $expand Extra fields: "openapi-3.0", "enterprise_status"
+     * @param ModelSort|null $sort Trending or keyword relevance (default), or newest first; keep it unchanged across pages
      */
     public function list(
         ?string $query = null,
@@ -32,6 +34,7 @@ final class ModelsResource extends BaseResource
         ?string $cursor = null,
         array $endpointIds = [],
         array $expand = [],
+        ?ModelSort $sort = null,
     ): ModelsPage {
         $response = $this->connector->send(new ListModelsRequest(
             search: $query,
@@ -41,6 +44,7 @@ final class ModelsResource extends BaseResource
             cursor: $cursor,
             endpointIds: $endpointIds,
             expand: $expand,
+            sort: $sort,
         ));
 
         return ModelsPage::fromResponse($response);

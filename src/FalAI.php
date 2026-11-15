@@ -48,18 +48,20 @@ final class FalAI
     /**
      * Run a model synchronously and return the response.
      *
-     * @param int|null $timeout Server-side deadline in seconds before processing starts (X-Fal-Request-Timeout)
+     * @param int|float|null $timeout Seconds the request has to start on a runner, else 504 (X-Fal-Request-Start-Timeout)
      * @param bool $noRetry Disable automatic retries (X-Fal-No-Retry)
      * @param ObjectLifecycle|null $lifecycle Expiration and access control of generated files (X-Fal-Object-Lifecycle-Preference)
      * @param bool|null $storeIo false stops fal.ai from storing the request payloads (X-Fal-Store-IO)
+     * @param array<string, string> $headers Extra platform headers (X-Fal-Tags, X-Fal-Runner-Hint, ...); the named options win
      */
     public function run(
         string $model,
         array $input,
-        ?int $timeout = null,
+        int|float|null $timeout = null,
         bool $noRetry = false,
         ?ObjectLifecycle $lifecycle = null,
         ?bool $storeIo = null,
+        array $headers = [],
     ): Response {
         return $this->syncConnector->send(new RunRequest(
             model: $model,
@@ -68,6 +70,7 @@ final class FalAI
             noRetry: $noRetry,
             lifecycle: $lifecycle,
             storeIo: $storeIo,
+            extraHeaders: $headers,
         ));
     }
 
@@ -77,15 +80,17 @@ final class FalAI
      * the generator's return value. Only models with a /stream endpoint
      * support this.
      *
+     * @param array<string, string> $headers Extra platform headers; the named options win
      * @return \Generator<int, array, mixed, array|null>
      */
     public function stream(
         string $model,
         array $input,
-        ?int $timeout = null,
+        int|float|null $timeout = null,
         bool $noRetry = false,
         ?ObjectLifecycle $lifecycle = null,
         ?bool $storeIo = null,
+        array $headers = [],
     ): \Generator {
         $response = $this->syncConnector->send(new StreamRequest(
             model: $model,
@@ -94,6 +99,7 @@ final class FalAI
             noRetry: $noRetry,
             lifecycle: $lifecycle,
             storeIo: $storeIo,
+            extraHeaders: $headers,
         ));
 
         $last = null;

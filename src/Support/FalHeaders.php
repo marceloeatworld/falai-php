@@ -14,20 +14,21 @@ use MarceloEatWorld\FalAI\Enums\Priority;
 final class FalHeaders
 {
     /**
+     * @param array<string, string> $headers Extra headers, overridden by the named options
      * @return array<string, string>
      */
     public static function build(
-        ?int $timeout = null,
+        int|float|null $timeout = null,
         bool $noRetry = false,
         ?ObjectLifecycle $lifecycle = null,
         ?bool $storeIo = null,
         ?Priority $priority = null,
         ?string $runnerHint = null,
+        array $headers = [],
     ): array {
-        $headers = [];
-
         if ($timeout !== null) {
-            $headers['X-Fal-Request-Timeout'] = (string) $timeout;
+            // Replaces the deprecated X-Fal-Request-Timeout.
+            $headers['X-Fal-Request-Start-Timeout'] = (string) $timeout;
         }
 
         if ($priority !== null) {
